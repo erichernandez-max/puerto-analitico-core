@@ -1,0 +1,27 @@
+{
+  "name": "puerto-analitico/puerto-core",
+  "description": "Núcleo del sistema de gestión y reservas de consultorios para Puerto Analítico.",
+  "type": "wordpress-plugin",
+  "license": "Proprietary",
+  "authors": [
+    {
+      "name": "Puerto Analítico Dev Team",
+      "email": "contacto@puertoanalitico.mx"
+    }
+  ],
+  "require": {
+    "php": ">=8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "PuertoCore\\": "src/"
+    },
+    "files": [
+      "includes/helpers.php"
+    ]
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

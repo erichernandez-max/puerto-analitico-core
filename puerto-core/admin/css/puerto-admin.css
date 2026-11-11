@@ -1,0 +1,44 @@
+/**
+ * Estilos para el panel administrativo de Puerto Analítico
+ */
+.puerto-admin-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 20px 0;
+}
+
+.puerto-admin-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #1e293b;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.puerto-badge.admin-badge {
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+.puerto-admin-title {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.puerto-admin-desc {
+    margin: 0 0 18px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #475569;
+}
+
+.puerto-alert-error {
+    background: #fef2f2;
+    border: 1px solid #f87171;
+    color: #991b1b;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-weight: 500;
+}

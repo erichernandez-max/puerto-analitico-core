@@ -1,0 +1,60 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Puerto Analítico Core 1.0.0\n"
+"Report-Msgid-Bugs-To: https://puertoanalitico.mx\n"
+"POT-Creation-Date: 2026-11-10 14:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Puerto Analítico Dev Team <contacto@puertoanalitico.mx>\n"
+"Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: puerto-core\n"
+
+#: src/Auth/RolesAndCapabilities.php:28
+msgid "Terapeuta Puerto Analítico"
+msgstr ""
+
+#: src/Rest/RestController.php:47
+msgid "Debes iniciar sesión para acceder a este recurso."
+msgstr ""
+
+#: src/Rest/RestController.php:68
+msgid "No tienes permisos suficientes para realizar reservas."
+msgstr ""
+
+#: src/Rest/RestController.php:88
+msgid "Acceso restringido únicamente a administradores."
+msgstr ""
+
+#: src/Rest/ReservasController.php:127
+msgid "La reserva indicada no existe."
+msgstr ""
+
+#: src/Rest/ReservasController.php:131
+msgid "No tienes permiso para gestionar esta reserva."
+msgstr ""
+
+#: src/Rest/ReservasController.php:147
+msgid "La fecha de término debe ser posterior a la fecha de inicio."
+msgstr ""
+
+#: src/Rest/ReservasController.php:156
+msgid "El consultorio especificado no existe."
+msgstr ""
+
+#: src/Shortcodes/AppShortcodes.php:82
+msgid "Cargando Puerto Analítico..."
+msgstr ""
+
+#: src/Shortcodes/AppShortcodes.php:90
+msgid "Acceso denegado: Se requieren permisos de administrador para visualizar este panel."
+msgstr ""
+
+#: src/Shortcodes/AppShortcodes.php:97
+msgid "Cargando Panel Administrativo..."
+msgstr ""
