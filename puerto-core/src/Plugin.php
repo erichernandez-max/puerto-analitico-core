@@ -16,6 +16,7 @@ use PuertoCore\Rest\DisponibilidadController;
 use PuertoCore\Rest\MeController;
 use PuertoCore\Rest\ProductosController;
 use PuertoCore\Rest\ReservasController;
+use PuertoCore\Rest\SoporteController;
 use PuertoCore\Shortcodes\AppShortcodes;
 
 if (!defined('ABSPATH')) {
@@ -66,6 +67,7 @@ final class Plugin
             new ProductosController(),
             new MeController(),
             new ReservasController(),
+            new SoporteController(),
             new AdminController(),
         ];
 

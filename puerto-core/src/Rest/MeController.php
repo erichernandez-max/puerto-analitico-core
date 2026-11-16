@@ -146,71 +146,49 @@ class MeController extends RestController
     }
 
     /**
-     * Obtiene los saldos vigentes del usuario actual con horas disponibles.
+     * Obtiene el saldo del usuario actual: compradas, apartadas, consumidas, disponibles y vencimiento.
      */
     public function getSaldos(WP_REST_Request $request): WP_REST_Response
     {
         global $wpdb;
 
         $userId = get_current_user_id();
-        $tablaSaldos    = $wpdb->prefix . Constants::TABLE_SALDOS;
-        $tablaProductos = $wpdb->prefix . Constants::TABLE_PRODUCTOS;
+        $tablaSaldos = $wpdb->prefix . Constants::TABLE_SALDOS;
 
         $query = $wpdb->prepare(
-            "SELECT s.id, s.producto_id, s.horas_compradas, s.horas_consumidas, 
-                    s.fecha_compra, s.fecha_vencimiento, s.estado, s.renovado_por_compra_id,
-                    p.nombre as producto_nombre, p.tipo as producto_tipo
-             FROM {$tablaSaldos} s
-             LEFT JOIN {$tablaProductos} p ON p.id = s.producto_id
-             WHERE s.user_id = %d 
-               AND s.estado = 'vigente'
-               AND (s.horas_compradas - s.horas_consumidas) > 0
-               AND s.fecha_vencimiento >= NOW()
-             ORDER BY s.fecha_vencimiento ASC",
+            "SELECT horas_compradas, horas_consumidas, horas_apartadas, fecha_vencimiento
+             FROM {$tablaSaldos}
+             WHERE user_id = %d 
+               AND estado = 'vigente'
+               AND fecha_vencimiento >= NOW()
+             ORDER BY fecha_vencimiento DESC",
             $userId
         );
 
         $saldos = $wpdb->get_results($query, ARRAY_A);
 
-        $totalDisponibles = 0.00;
-        $items = [];
+        $horasCompradas   = 0.00;
+        $horasApartadas   = 0.00;
+        $horasConsumidas  = 0.00;
+        $fechaVencimiento = null;
 
         if (!empty($saldos)) {
-            $tz = Reglas::timezone();
-            $ahora = new DateTimeImmutable('now', $tz);
-
             foreach ($saldos as $fila) {
-                $compradas   = (float) $fila['horas_compradas'];
-                $consumidas  = (float) $fila['horas_consumidas'];
-                $disponibles = max(0.00, round($compradas - $consumidas, 2));
-                $totalDisponibles += $disponibles;
-
-                $fechaVenc = new DateTimeImmutable((string) $fila['fecha_vencimiento'], $tz);
-                $diasRestantes = (int) $ahora->diff($fechaVenc)->format('%r%a');
-
-                $items[] = [
-                    'id'                     => (int) $fila['id'],
-                    'producto_id'            => (int) $fila['producto_id'],
-                    'producto_nombre'        => $fila['producto_nombre'] ? (string) $fila['producto_nombre'] : null,
-                    'producto_tipo'          => $fila['producto_tipo'] ? (string) $fila['producto_tipo'] : null,
-                    'horas_compradas'        => $compradas,
-                    'horas_consumidas'       => $consumidas,
-                    'horas_disponibles'      => $disponibles,
-                    'fecha_compra'           => (string) $fila['fecha_compra'],
-                    'fecha_vencimiento'      => (string) $fila['fecha_vencimiento'],
-                    'dias_para_vencer'       => max(0, $diasRestantes),
-                    'estado'                 => (string) $fila['estado'],
-                    'renovado_por_compra_id' => $fila['renovado_por_compra_id'] ? (int) $fila['renovado_por_compra_id'] : null,
-                ];
+                $horasCompradas   += (float) ($fila['horas_compradas'] ?? 0.0);
+                $horasApartadas   += (float) ($fila['horas_apartadas'] ?? 0.0);
+                $horasConsumidas  += (float) ($fila['horas_consumidas'] ?? 0.0);
             }
+            $fechaVencimiento = substr((string) $saldos[0]['fecha_vencimiento'], 0, 10);
         }
 
+        $horasDisponibles = max(0.00, round($horasCompradas - $horasConsumidas - $horasApartadas, 2));
+
         return $this->success([
-            'saldos'  => $items,
-            'resumen' => [
-                'total_horas_disponibles'    => round($totalDisponibles, 2),
-                'paquetes_vigentes_cantidad' => count($items),
-            ],
+            'horas_compradas'   => round($horasCompradas, 2),
+            'horas_apartadas'   => round($horasApartadas, 2),
+            'horas_consumidas'  => round($horasConsumidas, 2),
+            'horas_disponibles' => $horasDisponibles,
+            'fecha_vencimiento' => $fechaVencimiento,
         ]);
     }
 

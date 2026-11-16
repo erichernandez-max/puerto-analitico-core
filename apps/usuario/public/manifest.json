@@ -1,0 +1,24 @@
+{
+  "name": "Puerto Analítico - Portal de Terapeutas",
+  "short_name": "Puerto Analítico",
+  "description": "Aplicación de gestión, reserva y saldo de consultorios para terapeutas en Puerto Analítico.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
