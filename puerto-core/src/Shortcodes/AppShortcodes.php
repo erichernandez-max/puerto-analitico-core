@@ -34,27 +34,35 @@ class AppShortcodes
     public static function registerAssets(): void
     {
         $uploadDir = wp_upload_dir();
-        $puertoAppJsPath = $uploadDir['basedir'] . '/puerto-app/app-usuario.js';
-        $puertoAppJsUrl = $uploadDir['baseurl'] . '/puerto-app/app-usuario.js';
-        $puertoAppCssUrl = $uploadDir['baseurl'] . '/puerto-app/app-usuario.css';
+        $puertoAppDir     = $uploadDir['basedir'] . '/puerto-app';
+        $puertoAppUrl     = $uploadDir['baseurl'] . '/puerto-app';
+        $puertoAppJsPath  = $puertoAppDir . '/app-usuario.js';
+        $puertoAppCssPath = $puertoAppDir . '/app-usuario.css';
+        $puertoAppJsUrl   = $puertoAppUrl . '/app-usuario.js';
+        $puertoAppCssUrl  = $puertoAppUrl . '/app-usuario.css';
 
         if (file_exists($puertoAppJsPath)) {
+            $jsVer = (string) filemtime($puertoAppJsPath);
             wp_register_script(
                 'puerto-app-usuario',
                 $puertoAppJsUrl,
                 [],
-                PUERTO_CORE_VERSION,
+                $jsVer,
                 true
             );
-            wp_register_style(
-                'puerto-app-usuario-css',
-                $puertoAppCssUrl,
-                [],
-                PUERTO_CORE_VERSION
-            );
+
+            if (file_exists($puertoAppCssPath)) {
+                $cssVer = (string) filemtime($puertoAppCssPath);
+                wp_register_style(
+                    'puerto-app-usuario-css',
+                    $puertoAppCssUrl,
+                    [],
+                    $cssVer
+                );
+            }
         }
 
-        // Script público para el frontend del usuario (fallback)
+        // Script público para el frontend del usuario (fallback F1)
         wp_register_script(
             'puerto-app-placeholder',
             PUERTO_CORE_URL . 'public/js/puerto-app-placeholder.js',
@@ -85,6 +93,54 @@ class AppShortcodes
             [],
             PUERTO_CORE_VERSION
         );
+
+        // Si la página actual contiene el shortcode, encolar preventivamente en wp_enqueue_scripts
+        global $post;
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'puerto_app_usuario')) {
+            self::enqueueUsuarioAssets();
+        }
+    }
+
+    /**
+     * Encola los assets de la app React o el respaldo F1 según la existencia de los archivos.
+     */
+    public static function enqueueUsuarioAssets(): void
+    {
+        $uploadDir = wp_upload_dir();
+        $puertoAppDir     = $uploadDir['basedir'] . '/puerto-app';
+        $puertoAppUrl     = $uploadDir['baseurl'] . '/puerto-app';
+        $puertoAppJsPath  = $puertoAppDir . '/app-usuario.js';
+        $puertoAppCssPath = $puertoAppDir . '/app-usuario.css';
+        $puertoAppJsUrl   = $puertoAppUrl . '/app-usuario.js';
+        $puertoAppCssUrl  = $puertoAppUrl . '/app-usuario.css';
+
+        if (file_exists($puertoAppJsPath)) {
+            $jsVer  = (string) filemtime($puertoAppJsPath);
+            $cssVer = file_exists($puertoAppCssPath) ? (string) filemtime($puertoAppCssPath) : PUERTO_CORE_VERSION;
+
+            if (file_exists($puertoAppCssPath)) {
+                wp_enqueue_style(
+                    'puerto-app-usuario-css',
+                    $puertoAppCssUrl,
+                    [],
+                    $cssVer
+                );
+            }
+
+            wp_enqueue_script(
+                'puerto-app-usuario',
+                $puertoAppJsUrl,
+                [],
+                $jsVer,
+                true
+            );
+            self::injectConfig('puerto-app-usuario');
+        } else {
+            // Bloque de respaldo de F1 por si los archivos no existen
+            wp_enqueue_style('puerto-public-css');
+            wp_enqueue_script('puerto-app-placeholder');
+            self::injectConfig('puerto-app-placeholder');
+        }
     }
 
     /**
@@ -126,21 +182,18 @@ class AppShortcodes
      */
     public static function renderUsuarioApp(): string
     {
-        $uploadDir = wp_upload_dir();
-        $manifestUrl = $uploadDir['baseurl'] . '/puerto-app/manifest.json';
-        $manifestTag = sprintf('<link rel="manifest" href="%s">', esc_url($manifestUrl));
-        add_action('wp_head', static function () use ($manifestTag) {
-            echo $manifestTag . "\n";
-        });
+        // Encolar assets de React (app-usuario.js / app-usuario.css) o respaldo F1
+        self::enqueueUsuarioAssets();
 
-        if (wp_script_is('puerto-app-usuario', 'registered')) {
-            wp_enqueue_style('puerto-app-usuario-css');
-            wp_enqueue_script('puerto-app-usuario');
-            self::injectConfig('puerto-app-usuario');
-        } else {
-            wp_enqueue_style('puerto-public-css');
-            wp_enqueue_script('puerto-app-placeholder');
-            self::injectConfig('puerto-app-placeholder');
+        $uploadDir = wp_upload_dir();
+        $manifestPath = $uploadDir['basedir'] . '/puerto-app/manifest.json';
+        $manifestUrl  = $uploadDir['baseurl'] . '/puerto-app/manifest.json';
+
+        if (file_exists($manifestPath)) {
+            $manifestTag = sprintf('<link rel="manifest" href="%s">', esc_url($manifestUrl));
+            add_action('wp_head', static function () use ($manifestTag) {
+                echo $manifestTag . "\n";
+            });
         }
 
         return '<div id="puerto-usuario-root" class="puerto-app-container" data-app="usuario"><div class="puerto-loader-placeholder">' . esc_html__('Cargando Puerto Analítico...', 'puerto-core') . '</div></div>';

@@ -530,6 +530,20 @@ class ReservasController extends RestController
                 }
 
                 $nuevoId = (int) $wpdb->insert_id;
+
+                // NUEVO: Apartar (congelar) el saldo para que no se pueda usar dos veces
+                if (!$sinConsumoSaldo && in_array($tipo, ['hora', 'bloque'], true)) {
+                    $tablaSaldos = $wpdb->prefix . Constants::TABLE_SALDOS;
+                    // Sumamos las horas a "horas_apartadas" en el saldo del usuario
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$tablaSaldos} 
+                         SET horas_apartadas = horas_apartadas + %f 
+                         WHERE user_id = %d AND estado = 'vigente' 
+                         ORDER BY fecha_vencimiento ASC LIMIT 1",
+                        $duracionHoras,
+                        $targetUserId
+                    ));
+                }
                 $reservasCreadas[] = [
                     'id'             => $nuevoId,
                     'consultorio_id' => $consultorioId,
@@ -603,6 +617,19 @@ class ReservasController extends RestController
                 // Si la reserva ya había sido marcada consumida por el cron, devolvemos las horas a saldos
                 if ($reserva['consumida_en'] !== null) {
                     SaldoManager::devolverSaldo($id, sprintf('Devolución por cancelación anticipada (>= %d h)', $horasMinimasCancelacion));
+                } else {
+                    // NUEVO: Si no se había consumido, quitamos el bloqueo de "horas_apartadas"
+                    if (in_array($reserva['tipo'], ['hora', 'bloque'], true)) {
+                        $tablaSaldos = $wpdb->prefix . Constants::TABLE_SALDOS;
+                        $duracionHoras = round((strtotime($reserva['fecha_fin']) - strtotime($reserva['fecha_inicio'])) / 3600.0, 2);
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$tablaSaldos} 
+                             SET horas_apartadas = GREATEST(0, horas_apartadas - %f) 
+                             WHERE user_id = %d",
+                            $duracionHoras,
+                            (int) $reserva['user_id']
+                        ));
+                    }
                 }
 
                 $wpdb->update(
@@ -617,15 +644,20 @@ class ReservasController extends RestController
                     ['%d']
                 );
             } else {
-                // Menos de 24 horas: no devuelve saldo. Si aún no había sido consumida, se consume ahora
+                // Menos de 24 horas: no devuelve saldo. Se consume oficialmente el crédito apartado.
                 if ($reserva['consumida_en'] === null && in_array($reserva['tipo'], ['hora', 'bloque'], true)) {
                     $duracionHoras = round((strtotime($reserva['fecha_fin']) - strtotime($reserva['fecha_inicio'])) / 3600.0, 2);
                     $saldoId = $reserva['saldo_id'] ? (int) $reserva['saldo_id'] : null;
-                    try {
-                        SaldoManager::consumirSaldoFifo((int) $reserva['user_id'], $duracionHoras, $id, $saldoId);
-                    } catch (Exception) {
-                        // Si no logra debitar, se mantiene registro
-                    }
+                    
+                    // NUEVO: Quitamos las horas apartadas y las sumamos a las consumidas definitivamente
+                    $tablaSaldos = $wpdb->prefix . Constants::TABLE_SALDOS;
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$tablaSaldos} 
+                         SET horas_apartadas = GREATEST(0, horas_apartadas - %f), 
+                             horas_consumidas = horas_consumidas + %f
+                         WHERE user_id = %d",
+                        $duracionHoras, $duracionHoras, (int) $reserva['user_id']
+                    ));
                 }
 
                 $wpdb->update(
