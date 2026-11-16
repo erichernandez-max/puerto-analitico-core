@@ -284,6 +284,8 @@ class AdminController extends RestController
 
         $tablaReservas        = $wpdb->prefix . Constants::TABLE_RESERVAS;
         $tablaUsuariosNegocio = $wpdb->prefix . Constants::TABLE_USUARIOS_NEGOCIO;
+        $tablaSaldos          = $wpdb->prefix . Constants::TABLE_SALDOS;
+        $tablaConsultorios    = $wpdb->prefix . Constants::TABLE_CONSULTORIOS;
 
         $totalUsuarios = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$tablaUsuariosNegocio}");
         $usuariosActivos = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$tablaUsuariosNegocio} WHERE estado = 'activo'");
@@ -300,6 +302,104 @@ class AdminController extends RestController
         );
         $metricasReservas = $wpdb->get_row($queryReservas, ARRAY_A);
 
+        // 1. KPI: Horas reservadas hoy
+        $hoyStr = $ahora->format('Y-m-d');
+        $horasHoy = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, fecha_inicio, fecha_fin) / 60.0), 0)
+             FROM {$tablaReservas}
+             WHERE DATE(fecha_inicio) = %s AND estado IN ('confirmada', 'consumida')",
+            $hoyStr
+        ));
+
+        // 2. KPI: Sesiones de esta semana (Lunes a Domingo)
+        $inicioSemana = $ahora->modify('monday this week')->format('Y-m-d 00:00:00');
+        $finSemana    = $ahora->modify('sunday this week')->format('Y-m-d 23:59:59');
+        $sesionesSemana = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM {$tablaReservas}
+             WHERE fecha_inicio >= %s AND fecha_fin <= %s AND estado IN ('confirmada', 'consumida')",
+            $inicioSemana,
+            $finSemana
+        ));
+
+        // 3. KPI: Total de créditos (horas) disponibles en toda la plataforma
+        $creditosTotales = (float) $wpdb->get_var(
+            "SELECT COALESCE(SUM(horas_compradas - horas_consumidas), 0)
+             FROM {$tablaSaldos}
+             WHERE estado = 'vigente'"
+        );
+
+        // 4. KPI: Cancelaciones del mes en curso
+        $inicioMes = $ahora->modify('first day of this month')->format('Y-m-d 00:00:00');
+        $finMes    = $ahora->modify('last day of this month')->format('Y-m-d 23:59:59');
+        $cancelacionesMes = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM {$tablaReservas}
+             WHERE fecha_inicio >= %s AND fecha_fin <= %s AND estado = 'cancelada'",
+            $inicioMes,
+            $finMes
+        ));
+
+        // 5. Reservas por cada consultorio (Verde, Rosa, Azul, Negro, Café)
+        $consultorios = $wpdb->get_results(
+            "SELECT id, nombre, color FROM {$tablaConsultorios} WHERE activo = 1 ORDER BY id ASC",
+            ARRAY_A
+        );
+
+        $reservasPorConsultorio = [];
+        if (!empty($consultorios)) {
+            foreach ($consultorios as $c) {
+                $cId = (int) $c['id'];
+                $count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$tablaReservas}
+                     WHERE consultorio_id = %d AND fecha_inicio >= %s AND fecha_fin <= %s AND estado IN ('confirmada', 'consumida')",
+                    $cId,
+                    $fechaDesde,
+                    $fechaHasta
+                ));
+                // Quitar prefijo "Consultorio " si existe para la etiqueta corta
+                $nombreCorto = str_replace('Consultorio ', '', $c['nombre']);
+                $reservasPorConsultorio[] = [
+                    'consultorio_id' => $cId,
+                    'nombre'         => $nombreCorto,
+                    'nombre_completo'=> $c['nombre'],
+                    'color'          => $c['color'] ?: '#2E7D32',
+                    'reservas'       => $count,
+                ];
+            }
+        } else {
+            // Default de respaldo si no hay tabla poblada aún
+            $reservasPorConsultorio = [
+                ['consultorio_id' => 1, 'nombre' => 'Verde', 'nombre_completo' => 'Consultorio Verde', 'color' => '#2E7D32', 'reservas' => 0],
+                ['consultorio_id' => 2, 'nombre' => 'Rosa',  'nombre_completo' => 'Consultorio Rosa',  'color' => '#E91E63', 'reservas' => 0],
+                ['consultorio_id' => 3, 'nombre' => 'Azul',  'nombre_completo' => 'Consultorio Azul',  'color' => '#1976D2', 'reservas' => 0],
+                ['consultorio_id' => 4, 'nombre' => 'Negro', 'nombre_completo' => 'Consultorio Negro', 'color' => '#212121', 'reservas' => 0],
+                ['consultorio_id' => 5, 'nombre' => 'Café',  'nombre_completo' => 'Consultorio Café',  'color' => '#6D4C41', 'reservas' => 0],
+            ];
+        }
+
+        // 6. Reservas de las últimas 4 semanas
+        $reservas4Semanas = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $semInicio = $ahora->modify("-{$i} weeks monday this week")->format('Y-m-d 00:00:00');
+            $semFin    = $ahora->modify("-{$i} weeks sunday this week")->format('Y-m-d 23:59:59');
+            $labelSem  = 'Sem ' . date('d/m', strtotime($semInicio));
+
+            $countSem = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$tablaReservas}
+                 WHERE fecha_inicio >= %s AND fecha_fin <= %s AND estado IN ('confirmada', 'consumida')",
+                $semInicio,
+                $semFin
+            ));
+
+            $reservas4Semanas[] = [
+                'semana'       => $labelSem,
+                'fecha_inicio' => $semInicio,
+                'fecha_fin'    => $semFin,
+                'reservas'     => $countSem,
+            ];
+        }
+
         return $this->success([
             'periodo' => [
                 'desde' => $fechaDesde,
@@ -315,6 +415,14 @@ class AdminController extends RestController
                 'canceladas'     => (int) ($metricasReservas['canceladas'] ?? 0),
                 'horas_totales'  => round((float) ($metricasReservas['horas_totales'] ?? 0), 2),
             ],
+            'kpis' => [
+                'horas_hoy'         => round($horasHoy, 2),
+                'sesiones_semana'   => $sesionesSemana,
+                'creditos_totales'  => round($creditosTotales, 2),
+                'cancelaciones_mes' => $cancelacionesMes,
+            ],
+            'reservas_por_consultorio'   => $reservasPorConsultorio,
+            'reservas_ultimas_4_semanas' => $reservas4Semanas,
         ]);
     }
 

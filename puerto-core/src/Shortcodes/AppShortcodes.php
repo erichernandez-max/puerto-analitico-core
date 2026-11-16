@@ -62,6 +62,33 @@ class AppShortcodes
             }
         }
 
+        // --- App Admin React (app-admin.js / app-admin.css) ---
+        $adminJsPath  = $puertoAppDir . '/app-admin.js';
+        $adminCssPath = $puertoAppDir . '/app-admin.css';
+        $adminJsUrl   = $puertoAppUrl . '/app-admin.js';
+        $adminCssUrl  = $puertoAppUrl . '/app-admin.css';
+
+        if (file_exists($adminJsPath)) {
+            $adminJsVer = (string) filemtime($adminJsPath);
+            wp_register_script(
+                'puerto-app-admin',
+                $adminJsUrl,
+                [],
+                $adminJsVer,
+                true
+            );
+
+            if (file_exists($adminCssPath)) {
+                $adminCssVer = (string) filemtime($adminCssPath);
+                wp_register_style(
+                    'puerto-app-admin-css',
+                    $adminCssUrl,
+                    [],
+                    $adminCssVer
+                );
+            }
+        }
+
         // Script público para el frontend del usuario (fallback F1)
         wp_register_script(
             'puerto-app-placeholder',
@@ -78,7 +105,7 @@ class AppShortcodes
             PUERTO_CORE_VERSION
         );
 
-        // Script para el panel administrativo
+        // Script para el panel administrativo (fallback placeholder)
         wp_register_script(
             'puerto-admin-placeholder',
             PUERTO_CORE_URL . 'admin/js/puerto-admin-placeholder.js',
@@ -98,6 +125,9 @@ class AppShortcodes
         global $post;
         if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'puerto_app_usuario')) {
             self::enqueueUsuarioAssets();
+        }
+        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'puerto_app_admin')) {
+            self::enqueueAdminAssets();
         }
     }
 
@@ -200,6 +230,48 @@ class AppShortcodes
     }
 
     /**
+     * Encola los assets de la app Admin React o el respaldo placeholder.
+     */
+    public static function enqueueAdminAssets(): void
+    {
+        $uploadDir = wp_upload_dir();
+        $puertoAppDir = $uploadDir['basedir'] . '/puerto-app';
+        $puertoAppUrl = $uploadDir['baseurl'] . '/puerto-app';
+        $adminJsPath  = $puertoAppDir . '/app-admin.js';
+        $adminCssPath = $puertoAppDir . '/app-admin.css';
+        $adminJsUrl   = $puertoAppUrl . '/app-admin.js';
+        $adminCssUrl  = $puertoAppUrl . '/app-admin.css';
+
+        if (file_exists($adminJsPath)) {
+            $jsVer  = (string) filemtime($adminJsPath);
+            $cssVer = file_exists($adminCssPath) ? (string) filemtime($adminCssPath) : PUERTO_CORE_VERSION;
+
+            if (file_exists($adminCssPath)) {
+                wp_enqueue_style(
+                    'puerto-app-admin-css',
+                    $adminCssUrl,
+                    [],
+                    $cssVer
+                );
+            }
+
+            wp_enqueue_script(
+                'puerto-app-admin',
+                $adminJsUrl,
+                [],
+                $jsVer,
+                true
+            );
+            self::injectConfig('puerto-app-admin');
+        } else {
+            // Fallback placeholder
+            wp_enqueue_style('puerto-admin-css');
+            wp_enqueue_script('puerto-admin-placeholder');
+            self::injectConfig('puerto-admin-placeholder');
+        }
+    }
+
+    /**
      * Renderiza el contenedor para la app administrativa: [puerto_app_admin]
      */
     public static function renderAdminApp(): string
@@ -208,9 +280,7 @@ class AppShortcodes
             return '<div class="puerto-alert-error">' . esc_html__('Acceso denegado: Se requieren permisos de administrador para visualizar este panel.', 'puerto-core') . '</div>';
         }
 
-        wp_enqueue_style('puerto-admin-css');
-        wp_enqueue_script('puerto-admin-placeholder');
-        self::injectConfig('puerto-admin-placeholder');
+        self::enqueueAdminAssets();
 
         return '<div id="puerto-admin-root" class="puerto-admin-container" data-app="admin"><div class="puerto-loader-placeholder">' . esc_html__('Cargando Panel Administrativo...', 'puerto-core') . '</div></div>';
     }
