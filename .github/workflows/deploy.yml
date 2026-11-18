@@ -38,16 +38,19 @@ jobs:
     - name: Adding Known Hosts
       run: ssh-keyscan -p 65002 -H 212.1.208.197 >> ~/.ssh/known_hosts
 
-    - name: Create remote directories if they don't exist
+    - name: Create remote directories
       run: |
-        ssh -p 65002 u359755993@212.1.208.197 "mkdir -p /home/u359755993/public_html/wp-content/plugins/puerto-core"
-        ssh -p 65002 u359755993@212.1.208.197 "mkdir -p /home/u359755993/public_html/wp-content/uploads/puerto-app"
+        ssh -p 65002 u359755993@212.1.208.197 "mkdir -p ~/public_html/wp-content/plugins/puerto-core"
+        ssh -p 65002 u359755993@212.1.208.197 "mkdir -p ~/public_html/wp-content/uploads/puerto-app"
 
-    - name: Deploy Plugin to Hostinger
+    - name: Deploy Plugin
       run: |
-        rsync -avz -e "ssh -p 65002" ./puerto-core/ u359755993@212.1.208.197:/home/u359755993/public_html/wp-content/plugins/puerto-core/
+        rsync -avz -e "ssh -p 65002" ./puerto-core/ u359755993@212.1.208.197:~/public_html/wp-content/plugins/puerto-core/
 
-    - name: Deploy Frontends to Hostinger
+    - name: Deploy Usuario App
       run: |
-        rsync -avz -e "ssh -p 65002" ./apps/usuario/dist/ u359755993@212.1.208.197:/home/u359755993/public_html/wp-content/uploads/puerto-app/
-        rsync -avz -e "ssh -p 65002" ./apps/admin/dist/ u359755993@212.1.208.197:/home/u359755993/public_html/wp-content/uploads/puerto-app/
+        rsync -avz -e "ssh -p 65002" ./apps/usuario/dist/ u359755993@212.1.208.197:~/public_html/wp-content/uploads/puerto-app/
+
+    - name: Deploy Admin App
+      run: |
+        rsync -avz -e "ssh -p 65002" ./apps/admin/dist/ u359755993@212.1.208.197:~/public_html/wp-content/uploads/puerto-app/
