@@ -49,8 +49,8 @@ jobs:
 
     - name: Deploy Usuario App
       run: |
-        rsync -avz -e "ssh -p 65002" ./apps/usuario/dist/ u359755993@212.1.208.197:~/public_html/wp-content/uploads/puerto-app/
+        rsync -avz -e "ssh -p 65002" ./apps/usuario/dist/ u359755993@212.1.208.197:/home/u359755993/public_html/wp-content/uploads/puerto-app/
 
     - name: Deploy Admin App
       run: |
-        rsync -avz -e "ssh -p 65002" ./apps/admin/dist/ u359755993@212.1.208.197:~/public_html/wp-content/uploads/puerto-app/
+        rsync -avz -e "ssh -p 65002" ./apps/admin/dist/ u359755993@212.1.208.197:/home/u359755993/public_html/wp-content/uploads/puerto-app/
