@@ -35,14 +35,23 @@ class Reglas
     ];
 
     /**
-     * Obtiene el valor de una regla específica.
+     * Obtiene el valor de una regla específica directamente desde la tabla puerto_reglas.
      */
     public static function get(string $clave, mixed $default = null): mixed
     {
-        $reglas = self::all();
+        global $wpdb;
 
-        if (array_key_exists($clave, $reglas)) {
-            return $reglas[$clave];
+        if ($wpdb instanceof wpdb) {
+            $tabla = $wpdb->prefix . Constants::TABLE_REGLAS;
+            // Consulta directa a la base de datos para garantizar valores dinámicos en tiempo real
+            $valor = $wpdb->get_var($wpdb->prepare(
+                "SELECT valor FROM {$tabla} WHERE clave = %s LIMIT 1",
+                $clave
+            ));
+
+            if ($valor !== null && $valor !== false) {
+                return (string) $valor;
+            }
         }
 
         if ($default !== null) {
@@ -58,6 +67,10 @@ class Reglas
     public static function set(string $clave, mixed $valor): bool
     {
         global $wpdb;
+
+        if (!($wpdb instanceof wpdb)) {
+            return false;
+        }
 
         $tabla = $wpdb->prefix . Constants::TABLE_REGLAS;
         $valorString = is_bool($valor) ? ($valor ? '1' : '0') : (string) $valor;
@@ -80,33 +93,27 @@ class Reglas
     }
 
     /**
-     * Devuelve todas las reglas mapeadas [clave => valor], utilizando wp_cache.
+     * Devuelve todas las reglas mapeadas [clave => valor], consultando directamente la base de datos.
      *
      * @return array<string, string>
      */
     public static function all(): array
     {
-        $cached = wp_cache_get(self::CACHE_KEY_ALL, Constants::CACHE_GROUP_REGLAS);
-        if (is_array($cached)) {
-            return $cached;
-        }
-
         global $wpdb;
-        $tabla = $wpdb->prefix . Constants::TABLE_REGLAS;
-
-        // Comprobar si la tabla existe antes de consultar
-        $filas = $wpdb->get_results("SELECT clave, valor FROM {$tabla}", ARRAY_A);
-
         $reglas = self::DEFAULTS;
-        if (!empty($filas) && is_array($filas)) {
-            foreach ($filas as $fila) {
-                if (isset($fila['clave'], $fila['valor'])) {
-                    $reglas[(string) $fila['clave']] = (string) $fila['valor'];
+
+        if ($wpdb instanceof wpdb) {
+            $tabla = $wpdb->prefix . Constants::TABLE_REGLAS;
+            $filas = $wpdb->get_results("SELECT clave, valor FROM {$tabla}", ARRAY_A);
+
+            if (!empty($filas) && is_array($filas)) {
+                foreach ($filas as $fila) {
+                    if (isset($fila['clave'], $fila['valor'])) {
+                        $reglas[(string) $fila['clave']] = (string) $fila['valor'];
+                    }
                 }
             }
         }
-
-        wp_cache_set(self::CACHE_KEY_ALL, $reglas, Constants::CACHE_GROUP_REGLAS, 3600);
 
         return $reglas;
     }

@@ -25,6 +25,171 @@ class AdminController extends RestController
 {
     public function registerRoutes(): void
     {
+        // GET /admin/usuarios - Lista de usuarios con saldo y estado
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/usuarios',
+            [
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'getUsuarios'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'crearUsuario'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                    'args'                => [
+                        'nombre' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                        ],
+                        'email' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_email',
+                        ],
+                        'password' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                        ],
+                        'tipo_membresia' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'enum'              => ['prepago', 'turno', 'completo'],
+                            'default'           => 'prepago',
+                        ],
+                        'saldo_inicial' => [
+                            'required'          => false,
+                            'type'              => 'number',
+                            'default'           => 0,
+                        ],
+                        'notas' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_textarea_field',
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        // GET /admin/bloqueos - Lista de bloqueos activos y futuros
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/bloqueos',
+            [
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'getBloqueos'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'crearBloqueo'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                    'args'                => [
+                        'consultorio_id' => [
+                            'required'          => true,
+                            'type'              => 'integer',
+                            'validate_callback' => static fn($v) => is_numeric($v) && (int) $v >= 0,
+                            'description'       => 'ID de consultorio o 0 para todos los consultorios.',
+                        ],
+                        'fecha_inicio' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                        ],
+                        'fecha_fin' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                        ],
+                        'motivo' => [
+                            'required'          => true,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_textarea_field',
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        // DELETE /admin/bloqueos/{id} - Eliminar un bloqueo
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/bloqueos/(?P<id>\d+)',
+            [
+                [
+                    'methods'             => WP_REST_Server::DELETABLE,
+                    'callback'            => [$this, 'eliminarBloqueo'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                    'args'                => [
+                        'id' => [
+                            'required'          => true,
+                            'type'              => 'integer',
+                            'validate_callback' => static fn($v) => is_numeric($v) && (int) $v > 0,
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        // GET /admin/reservas - Listado completo de reservas para administración
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/reservas',
+            [
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'getReservasAdmin'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                    'args'                => [
+                        'consultorio_id' => [
+                            'required'          => false,
+                            'type'              => 'integer',
+                        ],
+                        'fecha' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                        ],
+                        'estado' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_text_field',
+                        ],
+                    ],
+                ],
+            ]
+        );
+
+        // POST /admin/reservas/{id}/cancelar - Cancelación forzosa administrativa
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/reservas/(?P<id>\d+)/cancelar',
+            [
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'cancelarReservaAdmin'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                    'args'                => [
+                        'id' => [
+                            'required'          => true,
+                            'type'              => 'integer',
+                            'validate_callback' => static fn($v) => is_numeric($v) && (int) $v > 0,
+                        ],
+                        'motivo' => [
+                            'required'          => false,
+                            'type'              => 'string',
+                            'sanitize_callback' => 'sanitize_textarea_field',
+                        ],
+                    ],
+                ],
+            ]
+        );
+
         // GET /admin/metricas?desde=&hasta=
         register_rest_route(
             $this->getNamespace(),
@@ -195,6 +360,24 @@ class AdminController extends RestController
                             'sanitize_callback' => 'sanitize_textarea_field',
                         ],
                     ],
+                ],
+            ]
+        );
+
+        // GET & POST /admin/configuracion - Gestión de reglas de negocio
+        register_rest_route(
+            $this->getNamespace(),
+            '/admin/configuracion',
+            [
+                [
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => [$this, 'getConfiguracion'],
+                    'permission_callback' => [$this, 'checkAdmin'],
+                ],
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'updateConfiguracion'],
+                    'permission_callback' => [$this, 'checkAdmin'],
                 ],
             ]
         );
@@ -427,6 +610,55 @@ class AdminController extends RestController
     }
 
     /**
+     * GET /admin/usuarios - Lista todos los usuarios del negocio con saldo disponible y estado.
+     */
+    public function getUsuarios(WP_REST_Request $request): WP_REST_Response
+    {
+        global $wpdb;
+
+        $tablaUsuariosNegocio = $wpdb->prefix . Constants::TABLE_USUARIOS_NEGOCIO;
+        $tablaSaldos          = $wpdb->prefix . Constants::TABLE_SALDOS;
+
+        // Obtener todos los registros de usuarios_negocio
+        $registros = $wpdb->get_results(
+            "SELECT un.user_id, un.tipo_membresia, un.estado, un.fecha_alta, un.notas
+             FROM {$tablaUsuariosNegocio} un
+             ORDER BY un.fecha_alta DESC",
+            ARRAY_A
+        );
+
+        $usuarios = [];
+        foreach ($registros as $row) {
+            $userId = (int) $row['user_id'];
+            $user = get_user_by('id', $userId);
+            if (!$user) {
+                continue;
+            }
+
+            // Calcular saldo disponible (horas vigentes - consumidas)
+            $saldoDisponible = (float) $wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(SUM(horas_compradas - horas_consumidas), 0)
+                 FROM {$tablaSaldos}
+                 WHERE user_id = %d AND estado = 'vigente'",
+                $userId
+            ));
+
+            $usuarios[] = [
+                'id'              => $userId,
+                'nombre'          => $user->display_name,
+                'email'           => $user->user_email,
+                'tipo_membresia'  => $row['tipo_membresia'],
+                'estado'          => $row['estado'],
+                'fecha_alta'      => $row['fecha_alta'],
+                'notas'           => $row['notas'],
+                'saldo_disponible'=> round($saldoDisponible, 2),
+            ];
+        }
+
+        return $this->success($usuarios);
+    }
+
+    /**
      * POST /admin/bloqueos - Crea un bloqueo puntual en puerto_bloqueos.
      */
     public function crearBloqueo(WP_REST_Request $request): WP_REST_Response|WP_Error
@@ -631,6 +863,382 @@ class AdminController extends RestController
             'estado'   => $estado,
             'motivo'   => $motivo,
             'mensaje'  => sprintf(__('El estado del usuario %s fue actualizado a "%s".', 'puerto-core'), $user->display_name, $estado),
+        ]);
+    }
+
+    /**
+     * POST /admin/usuarios - Crea un nuevo usuario en WordPress con membresía y saldo inicial opcional.
+     */
+    public function crearUsuario(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        global $wpdb;
+
+        $nombre        = trim((string) $request->get_param('nombre'));
+        $email         = sanitize_email((string) $request->get_param('email'));
+        $password      = (string) $request->get_param('password');
+        $tipoMembresia = (string) $request->get_param('tipo_membresia') ?: 'prepago';
+        $saldoInicial  = (float) $request->get_param('saldo_inicial');
+        $notas         = sanitize_textarea_field((string) $request->get_param('notas'));
+
+        if (empty($nombre) || empty($email) || empty($password)) {
+            return $this->error('puerto_campos_requeridos', __('Nombre, email y contraseña son obligatorios.', 'puerto-core'), 400);
+        }
+
+        if (!is_email($email)) {
+            return $this->error('puerto_email_invalido', __('El formato de correo electrónico no es válido.', 'puerto-core'), 400);
+        }
+
+        if (email_exists($email) || username_exists($email)) {
+            return $this->error('puerto_email_duplicado', __('Ya existe un usuario registrado con este correo electrónico.', 'puerto-core'), 400);
+        }
+
+        // Crear o verificar rol balsas_paciente
+        $rolBalsas = 'balsas_paciente';
+        if (!get_role($rolBalsas)) {
+            add_role($rolBalsas, __('Terapeuta Balsas', 'puerto-core'), [
+                'read'                  => true,
+                Constants::CAP_RESERVAR => true,
+            ]);
+        }
+
+        $userId = wp_insert_user([
+            'user_login'   => $email,
+            'user_email'   => $email,
+            'user_pass'    => $password,
+            'display_name' => $nombre,
+            'first_name'   => $nombre,
+            'role'         => $rolBalsas,
+        ]);
+
+        if (is_wp_error($userId)) {
+            return $this->error('puerto_error_crear_usuario', $userId->get_error_message(), 500);
+        }
+
+        // Asignar también el rol institucional puerto_paciente y capability
+        $userObj = get_user_by('id', $userId);
+        if ($userObj) {
+            $userObj->add_role(Constants::ROLE_PACIENTE);
+            $userObj->add_cap(Constants::CAP_RESERVAR);
+        }
+
+        $tablaUsuariosNegocio = $wpdb->prefix . Constants::TABLE_USUARIOS_NEGOCIO;
+        $tablaSaldos          = $wpdb->prefix . Constants::TABLE_SALDOS;
+        $tablaMovimientos     = $wpdb->prefix . Constants::TABLE_MOVIMIENTOS;
+        $ahoraStr             = current_time('mysql');
+
+        // Insertar en tabla de negocio
+        $wpdb->insert(
+            $tablaUsuariosNegocio,
+            [
+                'user_id'        => $userId,
+                'tipo_membresia' => in_array($tipoMembresia, ['prepago', 'turno', 'completo'], true) ? $tipoMembresia : 'prepago',
+                'estado'         => 'activo',
+                'fecha_alta'     => $ahoraStr,
+                'notas'          => !empty($notas) ? $notas : null,
+            ],
+            ['%d', '%s', '%s', '%s', '%s']
+        );
+
+        // Si hay saldo inicial asignado, registrar lote y movimiento
+        if ($saldoInicial > 0) {
+            $tz = Reglas::timezone();
+            $ahora = new DateTimeImmutable('now', $tz);
+            $vencimiento = $ahora->modify('+6 months')->format('Y-m-d H:i:s');
+
+            $wpdb->insert(
+                $tablaSaldos,
+                [
+                    'user_id'           => $userId,
+                    'producto_id'       => 1,
+                    'horas_compradas'   => $saldoInicial,
+                    'horas_consumidas'  => 0.00,
+                    'fecha_compra'      => $ahoraStr,
+                    'fecha_vencimiento' => $vencimiento,
+                    'estado'            => 'vigente',
+                ],
+                ['%d', '%d', '%f', '%f', '%s', '%s', '%s']
+            );
+
+            $saldoId = (int) $wpdb->insert_id;
+
+            $wpdb->insert(
+                $tablaMovimientos,
+                [
+                    'user_id'       => $userId,
+                    'saldo_id'      => $saldoId,
+                    'reserva_id'    => null,
+                    'tipo'          => 'compra',
+                    'horas'         => $saldoInicial,
+                    'motivo'        => 'Saldo inicial de alta de usuario',
+                    'admin_user_id' => get_current_user_id(),
+                    'created_at'    => $ahoraStr,
+                ],
+                ['%d', '%d', '%s', '%s', '%f', '%s', '%d', '%s']
+            );
+        }
+
+        return $this->success([
+            'id'               => $userId,
+            'nombre'           => $nombre,
+            'email'            => $email,
+            'tipo_membresia'   => $tipoMembresia,
+            'estado'           => 'activo',
+            'saldo_disponible' => $saldoInicial,
+            'fecha_alta'       => $ahoraStr,
+            'mensaje'          => __('Usuario creado exitosamente con rol balsas_paciente.', 'puerto-core'),
+        ], 201);
+    }
+
+    /**
+     * GET /admin/bloqueos - Lista los bloqueos registrados (activos y futuros).
+     */
+    public function getBloqueos(WP_REST_Request $request): WP_REST_Response
+    {
+        global $wpdb;
+
+        $tablaBloqueos     = $wpdb->prefix . Constants::TABLE_BLOQUEOS;
+        $tablaConsultorios = $wpdb->prefix . Constants::TABLE_CONSULTORIOS;
+
+        $sql = "SELECT b.id, b.consultorio_id, b.fecha_inicio, b.fecha_fin, b.motivo, 
+                       b.recurrente, b.patron_recurrencia, b.created_at,
+                       c.nombre as consultorio_nombre, c.color as consultorio_color
+                FROM {$tablaBloqueos} b
+                LEFT JOIN {$tablaConsultorios} c ON b.consultorio_id = c.id
+                ORDER BY b.fecha_inicio DESC
+                LIMIT 150";
+
+        $filas = $wpdb->get_results($sql, ARRAY_A);
+        $bloqueos = [];
+
+        foreach ($filas as $f) {
+            $cId = !empty($f['consultorio_id']) ? (int) $f['consultorio_id'] : 0;
+            $bloqueos[] = [
+                'id'                 => (int) $f['id'],
+                'consultorio_id'     => $cId,
+                'consultorio_nombre' => $cId > 0 && !empty($f['consultorio_nombre']) 
+                    ? str_replace('Consultorio ', '', $f['consultorio_nombre']) 
+                    : 'Todos los consultorios',
+                'consultorio_color'  => $cId > 0 && !empty($f['consultorio_color']) 
+                    ? $f['consultorio_color'] 
+                    : '#64748b',
+                'fecha_inicio'       => $f['fecha_inicio'],
+                'fecha_fin'          => $f['fecha_fin'],
+                'motivo'             => $f['motivo'],
+                'recurrente'         => (bool) $f['recurrente'],
+                'patron_recurrencia' => $f['patron_recurrencia'],
+                'created_at'         => $f['created_at'],
+            ];
+        }
+
+        return $this->success($bloqueos);
+    }
+
+    /**
+     * DELETE /admin/bloqueos/{id} - Elimina un bloqueo administrativo.
+     */
+    public function eliminarBloqueo(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        global $wpdb;
+
+        $id = (int) $request->get_param('id');
+        $tablaBloqueos = $wpdb->prefix . Constants::TABLE_BLOQUEOS;
+
+        $existe = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$tablaBloqueos} WHERE id = %d", $id));
+        if (!$existe) {
+            return $this->error('puerto_bloqueo_no_encontrado', __('El bloqueo especificado no existe.', 'puerto-core'), 404);
+        }
+
+        $eliminado = $wpdb->delete($tablaBloqueos, ['id' => $id], ['%d']);
+        if ($eliminado === false) {
+            return $this->error('puerto_error_eliminar', __('No se pudo eliminar el bloqueo.', 'puerto-core'), 500);
+        }
+
+        return $this->success([
+            'id'      => $id,
+            'mensaje' => __('Bloqueo eliminado correctamente.', 'puerto-core'),
+        ]);
+    }
+
+    /**
+     * GET /admin/reservas - Obtiene el listado de reservas con filtros por consultorio, fecha y estado.
+     */
+    public function getReservasAdmin(WP_REST_Request $request): WP_REST_Response
+    {
+        global $wpdb;
+
+        $tablaReservas     = $wpdb->prefix . Constants::TABLE_RESERVAS;
+        $tablaConsultorios = $wpdb->prefix . Constants::TABLE_CONSULTORIOS;
+
+        $consultorioId = $request->get_param('consultorio_id');
+        $fecha         = $request->get_param('fecha');
+        $estado        = $request->get_param('estado');
+
+        $where = ["1=1"];
+        $params = [];
+
+        if (!empty($consultorioId) && is_numeric($consultorioId) && (int) $consultorioId > 0) {
+            $where[] = "r.consultorio_id = %d";
+            $params[] = (int) $consultorioId;
+        }
+
+        if (!empty($fecha)) {
+            $where[] = "DATE(r.fecha_inicio) = %s";
+            $params[] = sanitize_text_field((string) $fecha);
+        }
+
+        if (!empty($estado) && in_array($estado, ['pendiente_pago', 'confirmada', 'consumida', 'cancelada', 'no_show', 'liberada'], true)) {
+            $where[] = "r.estado = %s";
+            $params[] = $estado;
+        }
+
+        $whereClause = implode(" AND ", $where);
+        $sql = "SELECT r.id, r.user_id, r.consultorio_id, r.fecha_inicio, r.fecha_fin, 
+                       r.tipo, r.estado, r.saldo_id, r.consumida_en, r.es_recurrente, r.serie_id, r.created_at,
+                       c.nombre as consultorio_nombre, c.color as consultorio_color
+                FROM {$tablaReservas} r
+                LEFT JOIN {$tablaConsultorios} c ON r.consultorio_id = c.id
+                WHERE {$whereClause}
+                ORDER BY r.fecha_inicio DESC
+                LIMIT 200";
+
+        if (!empty($params)) {
+            $filas = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+        } else {
+            $filas = $wpdb->get_results($sql, ARRAY_A);
+        }
+
+        $reservas = [];
+        foreach ($filas as $r) {
+            $userId = (int) $r['user_id'];
+            $user = get_user_by('id', $userId);
+            $duracionHoras = round((strtotime($r['fecha_fin']) - strtotime($r['fecha_inicio'])) / 3600.0, 2);
+
+            $reservas[] = [
+                'id'                 => (int) $r['id'],
+                'user_id'            => $userId,
+                'usuario_nombre'     => $user ? $user->display_name : 'Terapeuta #' . $userId,
+                'usuario_email'      => $user ? $user->user_email : '',
+                'consultorio_id'     => (int) $r['consultorio_id'],
+                'consultorio_nombre' => !empty($r['consultorio_nombre']) ? str_replace('Consultorio ', '', $r['consultorio_nombre']) : 'N/A',
+                'consultorio_color'  => !empty($r['consultorio_color']) ? $r['consultorio_color'] : '#2E7D32',
+                'fecha_inicio'       => $r['fecha_inicio'],
+                'fecha_fin'          => $r['fecha_fin'],
+                'duracion_horas'     => $duracionHoras,
+                'tipo'               => $r['tipo'],
+                'estado'             => $r['estado'],
+                'es_recurrente'      => (bool) $r['es_recurrente'],
+                'serie_id'           => $r['serie_id'],
+                'created_at'         => $r['created_at'],
+            ];
+        }
+
+        return $this->success($reservas);
+    }
+
+    /**
+     * POST /admin/reservas/{id}/cancelar - Cancelación forzosa por parte del administrador.
+     */
+    public function cancelarReservaAdmin(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        global $wpdb;
+
+        $id = (int) $request->get_param('id');
+        $motivo = sanitize_textarea_field((string) $request->get_param('motivo')) ?: 'Cancelación forzosa por administración';
+
+        $tablaReservas = $wpdb->prefix . Constants::TABLE_RESERVAS;
+        $reserva = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$tablaReservas} WHERE id = %d", $id), ARRAY_A);
+
+        if (!$reserva) {
+            return $this->error('puerto_reserva_no_encontrada', __('La reserva indicada no existe.', 'puerto-core'), 404);
+        }
+
+        if ($reserva['estado'] === 'cancelada') {
+            return $this->error('puerto_ya_cancelada', __('La reserva ya se encuentra cancelada.', 'puerto-core'), 400);
+        }
+
+        // Si fue consumida de saldo, reembolsar al usuario
+        $reembolsado = false;
+        if ($reserva['consumida_en'] !== null) {
+            SaldoManager::devolverSaldo($id, $motivo);
+            $reembolsado = true;
+        }
+
+        $wpdb->update(
+            $tablaReservas,
+            [
+                'estado'        => 'cancelada',
+                'consumida_en'  => null,
+                'updated_at'    => current_time('mysql'),
+            ],
+            ['id' => $id],
+            ['%s', '%s', '%s'],
+            ['%d']
+        );
+
+        return $this->success([
+            'status'      => 'cancelada_admin',
+            'id'          => $id,
+            'reembolsado' => $reembolsado,
+            'motivo'      => $motivo,
+            'mensaje'     => __('Reserva cancelada administrativamente con éxito.', 'puerto-core'),
+        ]);
+    }
+
+    /**
+     * GET /puerto/v1/admin/configuracion - Devuelve los valores actuales de la tabla puerto_reglas.
+     */
+    public function getConfiguracion(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $reglas = Reglas::all();
+        return $this->success($reglas);
+    }
+
+    /**
+     * POST /puerto/v1/admin/configuracion - Actualiza las reglas en la tabla puerto_reglas.
+     */
+    public function updateConfiguracion(WP_REST_Request $request): WP_REST_Response|WP_Error
+    {
+        $params = $request->get_json_params();
+        if (empty($params) || !is_array($params)) {
+            $params = $request->get_params();
+        }
+
+        if (empty($params) || !is_array($params)) {
+            return $this->error('puerto_params_invalidos', __('No se recibieron datos de configuración válidos.', 'puerto-core'), 400);
+        }
+
+        // Claves estándar reconocidas para la tabla puerto_reglas
+        $clavesPermitidas = [
+            'cancelacion_horas_minimas',
+            'bloque_min_horas',
+            'vigencia_meses',
+            'consumo_offset_horas',
+            'tz',
+            'horario_lv_inicio',
+            'horario_lv_fin',
+            'horario_sab_inicio',
+            'horario_sab_fin',
+            'domingo_cerrado',
+        ];
+
+        $actualizadas = [];
+        foreach ($params as $clave => $valor) {
+            $claveSanitizada = sanitize_key($clave);
+            // Permitir claves estándar o con prefijo
+            if (in_array($claveSanitizada, $clavesPermitidas, true) || str_starts_with($claveSanitizada, 'puerto_')) {
+                $valorSanitizado = is_bool($valor) ? ($valor ? '1' : '0') : sanitize_text_field((string) $valor);
+                Reglas::set($claveSanitizada, $valorSanitizado);
+                $actualizadas[$claveSanitizada] = $valorSanitizado;
+            }
+        }
+
+        // Invalida caché global para sincronización inmediata
+        Reglas::flush();
+
+        return $this->success([
+            'mensaje'      => __('Configuración actualizada exitosamente en puerto_reglas.', 'puerto-core'),
+            'reglas'       => Reglas::all(),
+            'actualizadas' => $actualizadas,
         ]);
     }
 }

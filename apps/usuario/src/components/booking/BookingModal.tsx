@@ -6,7 +6,9 @@ import { useReservasStore } from '../../store/useReservasStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useUiStore } from '../../store/useUiStore';
 import { CrearReservaPayload } from '../../types/reserva';
-import { Clock, Info, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Clock, Info, AlertTriangle, CheckCircle, CalendarPlus, Download, ArrowRight } from 'lucide-react';
+import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarUtils';
+import { formatHumanDate } from '../../utils/dateUtils';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -33,6 +35,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [saldoSeleccionadoId, setSaldoSeleccionadoId] = useState<number | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reservaExitosa, setReservaExitosa] = useState<{
+    consultorio: string;
+    fechaInicio: string;
+    fechaFin: string;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+    tipo: string;
+    esRecurrente: boolean;
+    semanas?: number;
+  } | null>(null);
 
   const consultorioActivo = consultorios.find(
     (c) => c.id === consultorioSeleccionadoId
@@ -40,6 +53,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const resumen = getResumenSeleccion();
   const totalHorasDisponibles = saldos?.horas_disponibles ?? saldos?.resumen?.total_horas_disponibles ?? 0;
   const paquetesVigentes = saldos?.saldos ?? [];
+
+  const handleModalClose = () => {
+    if (reservaExitosa) {
+      setReservaExitosa(null);
+      setActiveTab('mis-reservas');
+    }
+    onClose();
+  };
 
   const handleConfirmar = async () => {
     if (!consultorioSeleccionadoId || !resumen.fecha || !resumen.horaInicio || !resumen.horaFin) {
@@ -70,11 +91,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           : '¡Reserva confirmada con éxito!',
         'success'
       );
+      setReservaExitosa({
+        consultorio: consultorioActivo?.nombre || 'Consultorio',
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr,
+        fecha: resumen.fecha,
+        horaInicio: resumen.horaInicio,
+        horaFin: resumen.horaFin,
+        tipo: tipoReserva,
+        esRecurrente,
+        semanas: semanasRecurrente,
+      });
       await cargarSaldos();
       await cargarSemana(consultorioSeleccionadoId);
       limpiarSeleccion();
-      onClose();
-      setActiveTab('mis-reservas');
     } catch (err: any) {
       if (err.status === 409 || err.code === 'puerto_rest_slot_ocupado') {
         setErrorMessage(
@@ -88,10 +118,103 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
   };
 
+  if (reservaExitosa) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={handleModalClose}
+        title="¡Reserva Confirmada!"
+        maxWidth="md"
+      >
+        <div className="space-y-4 py-2 text-center">
+          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+            <CheckCircle className="w-7 h-7" />
+          </div>
+
+          <h3 className="text-lg font-bold text-slate-900">
+            Tu reserva ha sido confirmada con éxito
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
+            Hemos registrado tu espacio en Puerto Analítico. Ya puedes integrarlo a tu agenda personal.
+          </p>
+
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left text-xs sm:text-sm space-y-2 max-w-md mx-auto my-3">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Consultorio:</span>
+              <span className="font-semibold text-slate-900">{reservaExitosa.consultorio}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Fecha:</span>
+              <span className="font-semibold text-slate-900">{formatHumanDate(reservaExitosa.fechaInicio)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Horario:</span>
+              <span className="font-semibold text-slate-900">{reservaExitosa.horaInicio} - {reservaExitosa.horaFin}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Modalidad:</span>
+              <span className="font-semibold text-slate-900 capitalize">
+                {reservaExitosa.tipo} {reservaExitosa.esRecurrente && `(${reservaExitosa.semanas} semanas)`}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                const url = generateGoogleCalendarUrl({
+                  title: `Reserva: Consultorio ${reservaExitosa.consultorio} - Puerto Analítico`,
+                  description: `Reserva confirmada en Puerto Analítico.\nConsultorio: ${reservaExitosa.consultorio}\nModalidad: ${reservaExitosa.tipo}\nHorario: ${reservaExitosa.horaInicio} - ${reservaExitosa.horaFin}`,
+                  location: `Puerto Analítico - Consultorio ${reservaExitosa.consultorio}`,
+                  startDate: reservaExitosa.fechaInicio,
+                  endDate: reservaExitosa.fechaFin,
+                });
+                window.open(url, '_blank');
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-md transition-all"
+            >
+              <CalendarPlus className="w-4 h-4" />
+              <span>Añadir a mi calendario</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                downloadIcsFile({
+                  title: `Reserva: Consultorio ${reservaExitosa.consultorio} - Puerto Analítico`,
+                  description: `Reserva confirmada en Puerto Analítico.\nConsultorio: ${reservaExitosa.consultorio}\nModalidad: ${reservaExitosa.tipo}\nHorario: ${reservaExitosa.horaInicio} - ${reservaExitosa.horaFin}`,
+                  location: `Puerto Analítico - Consultorio ${reservaExitosa.consultorio}`,
+                  startDate: reservaExitosa.fechaInicio,
+                  endDate: reservaExitosa.fechaFin,
+                }, 'reserva-puerto-analitico.ics');
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>Descargar .ics</span>
+            </button>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 mt-4">
+            <button
+              type="button"
+              onClick={handleModalClose}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 font-semibold"
+            >
+              <span>Ir a Mis Reservas</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleModalClose}
       title={esRecurrente ? 'Confirmar Reserva Recurrente' : 'Confirmar Reserva'}
       maxWidth="md"
     >

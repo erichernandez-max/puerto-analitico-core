@@ -11,7 +11,8 @@ import {
 } from '../../utils/formatters';
 import { CancelarModal } from './CancelarModal';
 import { ReagendarModal } from './ReagendarModal';
-import { Calendar, Clock, Repeat, Edit3, XCircle } from 'lucide-react';
+import { Calendar, Clock, Repeat, Edit3, XCircle, CalendarPlus, Download } from 'lucide-react';
+import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarUtils';
 
 interface ReservaCardProps {
   reserva: Reserva;
@@ -98,42 +99,80 @@ export const ReservaCard: React.FC<ReservaCardProps> = ({ reserva }) => {
 
         {/* Acciones para reservas vigentes */}
         {esCancelable && (
-          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
-            <button
-              onClick={() => setModalReagendarOpen(true)}
-              disabled={!puedeReagendar}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                puedeReagendar
-                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  : 'bg-slate-50 text-slate-400 cursor-not-allowed'
-              }`}
-              title={
-                puedeReagendar
-                  ? 'Reagendar fecha u horario (R6)'
-                  : 'No disponible: faltan menos de 24h para el inicio (R6)'
-              }
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Reagendar</span>
-            </button>
-
-            <button
-              onClick={() => setModalCancelarOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              <span>Cancelar</span>
-            </button>
-
-            {reserva.es_recurrente && reserva.serie_id && (
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setModalCancelarSerieOpen(true)}
-                className="px-2.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors"
-                title="Cancelar todas las reservas de esta serie"
+                onClick={() => {
+                  const url = generateGoogleCalendarUrl({
+                    title: `Reserva: Consultorio ${reserva.consultorio.nombre} - Puerto Analítico`,
+                    description: `Reserva confirmada en Puerto Analítico.\nConsultorio: ${reserva.consultorio.nombre}\nModalidad: ${tipoLabel}\nHorario: ${formatTimeRange(reserva.fecha_inicio, reserva.fecha_fin)}`,
+                    location: `Puerto Analítico - Consultorio ${reserva.consultorio.nombre}`,
+                    startDate: reserva.fecha_inicio,
+                    endDate: reserva.fecha_fin,
+                  });
+                  window.open(url, '_blank');
+                }}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 transition-colors"
+                title="Añadir a Google Calendar"
               >
-                Cancelar Serie
+                <CalendarPlus className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Añadir a mi calendario</span>
               </button>
-            )}
+
+              <button
+                onClick={() => {
+                  downloadIcsFile({
+                    title: `Reserva: Consultorio ${reserva.consultorio.nombre} - Puerto Analítico`,
+                    description: `Reserva confirmada en Puerto Analítico.\nConsultorio: ${reserva.consultorio.nombre}\nModalidad: ${tipoLabel}\nHorario: ${formatTimeRange(reserva.fecha_inicio, reserva.fecha_fin)}`,
+                    location: `Puerto Analítico - Consultorio ${reserva.consultorio.nombre}`,
+                    startDate: reserva.fecha_inicio,
+                    endDate: reserva.fecha_fin,
+                  }, `reserva-${reserva.id}.ics`);
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                title="Descargar archivo .ics (Apple Calendar / Outlook)"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setModalReagendarOpen(true)}
+                disabled={!puedeReagendar}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  puedeReagendar
+                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'bg-slate-50 text-slate-400 cursor-not-allowed'
+                }`}
+                title={
+                  puedeReagendar
+                    ? 'Reagendar fecha u horario (R6)'
+                    : 'No disponible: faltan menos de 24h para el inicio (R6)'
+                }
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Reagendar</span>
+              </button>
+
+              <button
+                onClick={() => setModalCancelarOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Cancelar</span>
+              </button>
+
+              {reserva.es_recurrente && reserva.serie_id && (
+                <button
+                  onClick={() => setModalCancelarSerieOpen(true)}
+                  className="px-2.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                  title="Cancelar todas las reservas de esta serie"
+                >
+                  Cancelar Serie
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

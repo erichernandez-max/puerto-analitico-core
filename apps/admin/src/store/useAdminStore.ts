@@ -3,7 +3,7 @@ import { MetricasResponse, ReservasPorConsultorio, ReservasSemana } from '../typ
 import { fetchMetricas } from '../api/adminApi';
 import { getPuertoConfig } from '../api/client';
 
-type AdminTab = 'dashboard' | 'usuarios' | 'reservas' | 'configuracion';
+type AdminTab = 'dashboard' | 'usuarios' | 'bloqueos' | 'reservas' | 'configuracion';
 
 interface AdminState {
   activeTab: AdminTab;
@@ -28,7 +28,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   isAuthorized: false,
   checkAuth: () => {
     const config = getPuertoConfig();
-    set({ isAuthorized: config.isAdmin === true && config.isLoggedIn === true });
+    // Usamos String() para forzar la comparación y que TypeScript no se queje
+    const isAdminValid = String(config.isAdmin) === "1" || config.isAdmin === true;
+    const isLoggedValid = String(config.isLoggedIn) === "1" || config.isLoggedIn === true;
+    set({ isAuthorized: isAdminValid && isLoggedValid });
   },
   cargarMetricas: async (desde?: string, hasta?: string) => {
     try {

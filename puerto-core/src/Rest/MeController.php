@@ -79,6 +79,32 @@ class MeController extends RestController
                 ],
             ]
         );
+
+        // POST /login (Autenticación de terapeutas)
+        register_rest_route(
+            $this->getNamespace(),
+            '/login',
+            [
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'login'],
+                    'permission_callback' => '__return_true',
+                ],
+            ]
+        );
+
+        // Endpoint alternativo en namespace wp/v2 para compatibilidad (/wp-json/wp/v2/users/login)
+        register_rest_route(
+            'wp/v2',
+            '/users/login',
+            [
+                [
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => [$this, 'login'],
+                    'permission_callback' => '__return_true',
+                ],
+            ]
+        );
     }
 
     /**

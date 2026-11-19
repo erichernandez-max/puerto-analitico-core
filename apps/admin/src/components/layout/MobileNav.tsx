@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, Users, CalendarDays, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarOff, CalendarDays, Settings } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
 import clsx from 'clsx';
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
   { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
+  { id: 'bloqueos' as const, label: 'Bloqueos', icon: CalendarOff },
   { id: 'reservas' as const, label: 'Reservas', icon: CalendarDays },
   { id: 'configuracion' as const, label: 'Config', icon: Settings },
 ];

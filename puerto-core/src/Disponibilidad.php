@@ -87,16 +87,19 @@ class Disponibilidad
             $fechaStr = $diaActual->format('Y-m-d');
 
             // Regla R1: Domingos cerrado (0 slots agendables)
-            if ($diaSemana === 0) {
+            if ($diaSemana === 0 && Reglas::domingoCerrado()) {
                 $diaActual = $diaActual->add($unDia);
                 continue;
             }
 
-            // Horarios según R1
-            // L-V: 08:00 a 21:00 (13 slots de 1h: inicios de 08:00 a 20:00)
-            // Sáb: 08:00 a 17:00 (9 slots de 1h: inicios de 08:00 a 16:00)
-            $horaInicioDia = 8;
-            $horaFinDia = ($diaSemana === 6) ? 17 : 21;
+            // Horarios según reglas de negocio dinámicas
+            if ($diaSemana === 6) {
+                $horaInicioDia = (int) explode(':', Reglas::horarioSabInicio())[0];
+                $horaFinDia    = (int) explode(':', Reglas::horarioSabFin())[0];
+            } else {
+                $horaInicioDia = (int) explode(':', Reglas::horarioLvInicio())[0];
+                $horaFinDia    = (int) explode(':', Reglas::horarioLvFin())[0];
+            }
 
             for ($hora = $horaInicioDia; $hora < $horaFinDia; $hora++) {
                 $horaInicioStr = sprintf('%02d:00', $hora);

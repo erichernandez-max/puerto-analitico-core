@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Badge } from './Badge';
 import { Clock, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { perfil, saldos, recargarTodo, isLoading } = useAuthStore();
+  const [logoError, setLogoError] = useState(false);
+  const logoUrl = typeof window !== 'undefined' ? (window.puertoConfig?.logoUrl || window.PuertoConfig?.logoUrl) : undefined;
 
   const totalHoras = saldos?.horas_disponibles ?? saldos?.resumen?.total_horas_disponibles ?? 0;
   const paquetesVigentes = saldos?.resumen?.paquetes_vigentes_cantidad ?? 1;
@@ -22,8 +24,17 @@ export const Header: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Logo y terapeuta info */}
           <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-md border border-slate-800 flex-shrink-0">
-              PA
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-md border border-slate-800 flex-shrink-0 overflow-hidden">
+              {logoUrl && !logoError ? (
+                <img
+                  src={logoUrl}
+                  alt="Puerto Analítico"
+                  className="w-full h-full object-cover"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                'PA'
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">

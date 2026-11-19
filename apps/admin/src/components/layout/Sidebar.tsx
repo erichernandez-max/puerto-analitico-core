@@ -1,21 +1,36 @@
-import React from 'react';
-import { LayoutDashboard, Users, CalendarDays, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { LayoutDashboard, Users, CalendarOff, CalendarDays, Settings } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
 import clsx from 'clsx';
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
   { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
+  { id: 'bloqueos' as const, label: 'Bloqueos', icon: CalendarOff },
   { id: 'reservas' as const, label: 'Reservas', icon: CalendarDays },
   { id: 'configuracion' as const, label: 'Configuración', icon: Settings },
 ];
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab } = useAdminStore();
+  const [logoError, setLogoError] = useState(false);
+  const logoUrl = typeof window !== 'undefined' ? (window.puertoConfig?.logoUrl || window.PuertoConfig?.logoUrl) : undefined;
+
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 bg-puerto-900 text-white min-h-screen">
       <div className="flex items-center gap-3 px-6 py-5 border-b border-puerto-700">
-        <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-sm">PA</div>
+        <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-sm overflow-hidden flex-shrink-0">
+          {logoUrl && !logoError ? (
+            <img
+              src={logoUrl}
+              alt="Puerto Analítico"
+              className="w-full h-full object-cover"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            'PA'
+          )}
+        </div>
         <div>
           <p className="font-semibold text-sm leading-tight">Puerto Analítico</p>
           <p className="text-[11px] text-slate-400">Panel Admin</p>

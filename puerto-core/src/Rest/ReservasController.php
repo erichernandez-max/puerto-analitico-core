@@ -5,6 +5,7 @@ namespace PuertoCore\Rest;
 
 use DateInterval;
 use DateTimeImmutable;
+use DateTimeZone;
 use Exception;
 use PuertoCore\Config\Constants;
 use PuertoCore\Config\Reglas;
@@ -559,6 +560,20 @@ class ReservasController extends RestController
             }
 
             $wpdb->query('COMMIT');
+
+            // Envío de correo automático al confirmar reserva (Fase 5)
+            $this->enviarEmailConfirmacion([
+                'id'                 => $reservasCreadas[0]['id'] ?? 0,
+                'user_id'            => $targetUserId,
+                'consultorio_id'     => $consultorioId,
+                'consultorio_nombre' => $consultorio['nombre'],
+                'fecha_inicio'       => $fechaInicioStr,
+                'fecha_fin'          => $fechaFinStr,
+                'tipo'               => $tipo,
+                'es_recurrente'      => $esRecurrente,
+                'total_reservas'     => count($reservasCreadas),
+                'reservas'           => $reservasCreadas,
+            ]);
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
             return $this->error('puerto_error_transaccion', $e->getMessage(), 500);
@@ -837,14 +852,15 @@ class ReservasController extends RestController
         $canceladasConDevolucion = 0;
         $canceladasSinDevolucion = 0;
 
+        $horasMinimasSerie = Reglas::cancelacionHorasMinimas();
         foreach ($reservas as $res) {
             $resId = (int) $res['id'];
             $fInicio = new DateTimeImmutable($res['fecha_inicio'], $tz);
             $anticipacionHoras = ($fInicio->getTimestamp() - $ahora->getTimestamp()) / 3600.0;
 
-            if ($anticipacionHoras >= 24) {
+            if ($anticipacionHoras >= $horasMinimasSerie) {
                 if ($res['consumida_en'] !== null) {
-                    SaldoManager::devolverSaldo($resId, 'Cancelación de serie recurrente >= 24h');
+                    SaldoManager::devolverSaldo($resId, sprintf('Cancelación de serie recurrente >= %dh', $horasMinimasSerie));
                 }
                 $wpdb->update($tablaReservas, ['estado' => 'cancelada', 'consumida_en' => null], ['id' => $resId]);
                 $canceladasConDevolucion++;
@@ -938,7 +954,7 @@ class ReservasController extends RestController
 
         $diaSemana = (int) $inicio->format('w'); // 0=Domingo, 6=Sábado
 
-        if ($diaSemana === 0) {
+        if ($diaSemana === 0 && Reglas::domingoCerrado()) {
             return $this->error('puerto_domingo_cerrado', __('Puerto Analítico se encuentra cerrado los domingos.', 'puerto-core'), 400);
         }
 
@@ -946,14 +962,24 @@ class ReservasController extends RestController
         $horaFin    = (int) $fin->format('H');
 
         if ($diaSemana >= 1 && $diaSemana <= 5) {
-            // Lunes a Viernes: 08:00 a 21:00
-            if ($horaInicio < 8 || $horaFin > 21) {
-                return $this->error('puerto_fuera_de_horario', __('El horario de atención de Lunes a Viernes es de 08:00 a 21:00.', 'puerto-core'), 400);
+            $lvInicio = (int) explode(':', Reglas::horarioLvInicio())[0];
+            $lvFin    = (int) explode(':', Reglas::horarioLvFin())[0];
+            if ($horaInicio < $lvInicio || $horaFin > $lvFin) {
+                return $this->error(
+                    'puerto_fuera_de_horario',
+                    sprintf(__('El horario de atención de Lunes a Viernes es de %s a %s.', 'puerto-core'), Reglas::horarioLvInicio(), Reglas::horarioLvFin()),
+                    400
+                );
             }
         } elseif ($diaSemana === 6) {
-            // Sábado: 08:00 a 17:00
-            if ($horaInicio < 8 || $horaFin > 17) {
-                return $this->error('puerto_fuera_de_horario_sabado', __('El horario de atención los Sábados es de 08:00 a 17:00.', 'puerto-core'), 400);
+            $sabInicio = (int) explode(':', Reglas::horarioSabInicio())[0];
+            $sabFin    = (int) explode(':', Reglas::horarioSabFin())[0];
+            if ($horaInicio < $sabInicio || $horaFin > $sabFin) {
+                return $this->error(
+                    'puerto_fuera_de_horario_sabado',
+                    sprintf(__('El horario de atención los Sábados es de %s a %s.', 'puerto-core'), Reglas::horarioSabInicio(), Reglas::horarioSabFin()),
+                    400
+                );
             }
         }
 
@@ -974,5 +1000,143 @@ class ReservasController extends RestController
         $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
 
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    /**
+     * Envía correo de confirmación de reserva al terapeuta con copia al administrador,
+     * e incluye enlace a Google Calendar y resumen de detalles (Fase 5).
+     *
+     * @param array<string, mixed> $reserva
+     */
+    private function enviarEmailConfirmacion(array $reserva): bool
+    {
+        try {
+            $userId = (int) ($reserva['user_id'] ?? 0);
+            $usuario = get_userdata($userId);
+            if (!$usuario || empty($usuario->user_email)) {
+                return false;
+            }
+
+            $userEmail = $usuario->user_email;
+            $userName  = $usuario->display_name ?: ($usuario->first_name ?: $usuario->user_login);
+            $adminEmail = get_option('admin_email');
+
+            $consultorioNombre = $reserva['consultorio_nombre'] ?? __('Consultorio', 'puerto-core');
+            $fechaInicioStr    = $reserva['fecha_inicio'] ?? '';
+            $fechaFinStr       = $reserva['fecha_fin'] ?? '';
+            $tipo              = $reserva['tipo'] ?? 'hora';
+            $esRecurrente      = !empty($reserva['es_recurrente']);
+            $totalReservas     = (int) ($reserva['total_reservas'] ?? 1);
+
+            $tz = Reglas::timezone();
+            $dtInicio = new DateTimeImmutable($fechaInicioStr, $tz);
+            $dtFin    = new DateTimeImmutable($fechaFinStr, $tz);
+
+            // Mapeo amigable de tipo
+            $tiposLabels = [
+                'hora'     => 'Por Horas',
+                'bloque'   => 'Bloque (3h+)',
+                'turno'    => 'Turno Fijo',
+                'completo' => 'Consultorio Completo',
+            ];
+            $tipoLabel = $tiposLabels[$tipo] ?? ucfirst($tipo);
+
+            // Formatos amigables para mostrar en español
+            $meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            $diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            $diaSemana = $diasSemana[(int) $dtInicio->format('w')];
+            $fechaHumana = sprintf('%s %s de %s, %s', $diaSemana, $dtInicio->format('j'), $meses[(int)$dtInicio->format('n') - 1], $dtInicio->format('Y'));
+            $horario = sprintf('%s - %s', $dtInicio->format('H:i'), $dtFin->format('H:i'));
+
+            // Fechas en UTC para Google Calendar
+            $dtInicioUtc = $dtInicio->setTimezone(new DateTimeZone('UTC'));
+            $dtFinUtc    = $dtFin->setTimezone(new DateTimeZone('UTC'));
+            $gcalDates   = $dtInicioUtc->format('Ymd\THis\Z') . '/' . $dtFinUtc->format('Ymd\THis\Z');
+
+            $gcalTitle    = urlencode("Reserva: {$consultorioNombre} - Puerto Analítico");
+            $gcalDetails  = urlencode("Reserva confirmada en Puerto Analítico\nConsultorio: {$consultorioNombre}\nTipo: {$tipoLabel}\nHorario: {$horario}\n¡Te esperamos en Balsas 14!");
+            $gcalLocation = urlencode("Puerto Analítico - {$consultorioNombre}");
+            $gcalUrl      = "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$gcalTitle}&dates={$gcalDates}&details={$gcalDetails}&location={$gcalLocation}";
+
+            $asunto = __('Reserva confirmada en Puerto Analítico', 'puerto-core');
+
+            // Nota si es recurrente
+            $recurrenteNota = $esRecurrente 
+                ? "<p style='margin: 12px 0 0 0; padding: 10px 14px; background-color: #f3e8ff; color: #6b21a8; border-radius: 6px; font-size: 13px; font-weight: 500;'><strong>Reserva recurrente:</strong> Se generó una serie semanal de {$totalReservas} reservas confirmadas.</p>" 
+                : "";
+
+            $cancelacionHoras = Reglas::cancelacionHorasMinimas();
+
+            $cuerpo = "
+            <!DOCTYPE html>
+            <html lang='es'>
+            <head>
+              <meta charset='utf-8'>
+              <title>{$asunto}</title>
+            </head>
+            <body style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;'>
+              <div style='max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
+                <div style='background-color: #0f172a; padding: 24px; text-align: center;'>
+                  <h1 style='color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;'>Puerto Analítico</h1>
+                  <p style='color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;'>Confirmación de Reserva</p>
+                </div>
+                <div style='padding: 28px 24px;'>
+                  <p style='font-size: 15px; margin: 0 0 16px 0;'>Hola <strong>" . esc_html($userName) . "</strong>,</p>
+                  <p style='font-size: 14px; margin: 0 0 20px 0; color: #475569;'>Tu reserva ha sido confirmada con éxito. A continuación encontrarás el resumen de tu sesión:</p>
+                  
+                  <div style='background-color: #f1f5f9; border-radius: 8px; padding: 18px; margin-bottom: 24px;'>
+                    <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>
+                      <tr>
+                        <td style='padding: 6px 0; color: #64748b; width: 120px;'><strong>Consultorio:</strong></td>
+                        <td style='padding: 6px 0; color: #0f172a; font-weight: 600;'>" . esc_html($consultorioNombre) . "</td>
+                      </tr>
+                      <tr>
+                        <td style='padding: 6px 0; color: #64748b;'><strong>Fecha:</strong></td>
+                        <td style='padding: 6px 0; color: #0f172a; font-weight: 600;'>" . esc_html($fechaHumana) . "</td>
+                      </tr>
+                      <tr>
+                        <td style='padding: 6px 0; color: #64748b;'><strong>Horario:</strong></td>
+                        <td style='padding: 6px 0; color: #0f172a; font-weight: 600;'>" . esc_html($horario) . " (" . esc_html($tz->getName()) . ")</td>
+                      </tr>
+                      <tr>
+                        <td style='padding: 6px 0; color: #64748b;'><strong>Tipo de reserva:</strong></td>
+                        <td style='padding: 6px 0; color: #0f172a; font-weight: 600;'>" . esc_html($tipoLabel) . "</td>
+                      </tr>
+                    </table>
+                    {$recurrenteNota}
+                  </div>
+
+                  <div style='text-align: center; margin: 28px 0 20px 0;'>
+                    <a href='" . esc_url($gcalUrl) . "' target='_blank' style='display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; padding: 12px 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);'>
+                      📅 Añadir a Google Calendar
+                    </a>
+                  </div>
+
+                  <p style='font-size: 12px; color: #94a3b8; text-align: center; margin: 16px 0 0 0;'>
+                    Recuerda que puedes cancelar o reagendar hasta {$cancelacionHoras} horas antes del inicio de la reserva desde tu portal.
+                  </p>
+                </div>
+                <div style='background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8;'>
+                  Puerto Analítico • balsasanaliticas.com
+                </div>
+              </div>
+            </body>
+            </html>
+            ";
+
+            $headers = [
+                'Content-Type: text/html; charset=UTF-8',
+                'From: Puerto Analítico <' . ($adminEmail ?: 'no-reply@balsasanaliticas.com') . '>',
+            ];
+
+            if (!empty($adminEmail) && $adminEmail !== $userEmail) {
+                $headers[] = 'Bcc: ' . $adminEmail;
+            }
+
+            return (bool) wp_mail($userEmail, $asunto, $cuerpo, $headers);
+        } catch (\Throwable $e) {
+            error_log('[Puerto Core] Error al enviar email de confirmación: ' . $e->getMessage());
+            return false;
+        }
     }
 }
