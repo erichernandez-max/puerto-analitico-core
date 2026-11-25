@@ -101,6 +101,19 @@ export async function fetchConfiguracion(): Promise<Record<string, string>> {
   return request<Record<string, string>>('/admin/configuracion');
 }
 
+export async function fetchDisponibilidadAdmin(
+  consultorioId: number,
+  fechaDesde: string,
+  fechaHasta: string
+): Promise<any[]> {
+  const params = new URLSearchParams({
+    consultorio_id: String(consultorioId),
+    fecha_desde: fechaDesde,
+    fecha_hasta: fechaHasta,
+  });
+  return request<any[]>(`/disponibilidad?${params.toString()}`);
+}
+
 export async function updateConfiguracion(reglas: Record<string, string>): Promise<{
   mensaje: string;
   reglas: Record<string, string>;

@@ -50,18 +50,21 @@ export const AjusteSaldoModal: React.FC<Props> = ({ usuario, onClose, onSuccess 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md"
+        className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-800 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-neutral-800">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-amber-600" />
-            <h2 className="text-base font-semibold text-slate-800">Ajustar Saldo</h2>
+            <Wallet className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <h2 className="text-base font-semibold text-slate-800 dark:text-neutral-100">Ajustar Saldo</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-md hover:bg-slate-100 transition-colors">
+          <button
+            onClick={onClose}
+            className="min-h-[40px] min-w-[40px] flex items-center justify-center p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors"
+          >
             <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
@@ -69,21 +72,21 @@ export const AjusteSaldoModal: React.FC<Props> = ({ usuario, onClose, onSuccess 
         {/* Body */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {/* Info usuario */}
-          <div className="bg-slate-50 rounded-lg p-3">
-            <p className="text-sm font-medium text-slate-700">{usuario.nombre}</p>
-            <p className="text-xs text-slate-500">{usuario.email}</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Saldo actual: <span className="font-semibold text-emerald-600">{usuario.saldo_disponible}h</span>
+          <div className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3 border border-slate-200 dark:border-neutral-700">
+            <p className="text-sm font-semibold text-slate-800 dark:text-neutral-100">{usuario.nombre}</p>
+            <p className="text-xs text-slate-500 dark:text-neutral-400">{usuario.email}</p>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
+              Saldo actual: <span className="font-bold text-emerald-600 dark:text-emerald-400">{usuario.saldo_disponible}h</span>
             </p>
           </div>
 
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de operación</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">Tipo de operación</label>
             <select
               value={tipo}
               onChange={(e) => setTipo(e.target.value as typeof tipo)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="compra">Compra (agregar horas)</option>
               <option value="ajuste_admin">Ajuste administrativo</option>
@@ -93,7 +96,7 @@ export const AjusteSaldoModal: React.FC<Props> = ({ usuario, onClose, onSuccess 
 
           {/* Horas */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Horas</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">Horas</label>
             <input
               type="number"
               step="0.5"
@@ -101,49 +104,49 @@ export const AjusteSaldoModal: React.FC<Props> = ({ usuario, onClose, onSuccess 
               value={horas}
               onChange={(e) => setHoras(e.target.value)}
               placeholder="Ej: 10"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               required
             />
           </div>
 
           {/* Motivo */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Motivo</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">Motivo</label>
             <textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               placeholder="Describe la razón del ajuste..."
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+              className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
               required
             />
           </div>
 
           {/* Error / Success */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+            <div className="bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-900 text-red-700 dark:text-rose-400 px-3 py-2 rounded-xl text-xs">
               {error}
             </div>
           )}
           {success && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-2 rounded-lg text-xs">
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-2 rounded-xl text-xs">
               ✓ Saldo actualizado correctamente.
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2.5 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+              className="min-h-[44px] px-4 py-2 text-xs font-semibold text-slate-600 dark:text-neutral-400 bg-slate-100 dark:bg-neutral-800 rounded-xl hover:bg-slate-200 dark:hover:bg-neutral-700 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting || success}
-              className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors"
+              className="min-h-[44px] px-5 py-2 text-xs font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 disabled:opacity-50 transition-colors active:scale-95 shadow-xs"
             >
               {isSubmitting ? 'Procesando...' : 'Aplicar Ajuste'}
             </button>

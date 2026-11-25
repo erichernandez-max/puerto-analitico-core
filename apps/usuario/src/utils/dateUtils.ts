@@ -61,13 +61,17 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-export function formatDayHeader(date: Date): { diaNombre: string; fechaCorta: string } {
+export function formatDayHeader(date: Date): { diaNombre: string; fechaCorta: string; diaNumero: number; mesNombre: string; fechaCompleta: string } {
   const diaNombre = DIAS_SEMANA[date.getDay()];
   const diaNumero = date.getDate();
   const mesNombre = MESES[date.getMonth()].slice(0, 3);
+  const mesCompleto = MESES[date.getMonth()];
   return {
     diaNombre,
     fechaCorta: `${diaNumero} ${mesNombre}`,
+    diaNumero,
+    mesNombre,
+    fechaCompleta: `${diaNumero} de ${mesCompleto}`,
   };
 }
 

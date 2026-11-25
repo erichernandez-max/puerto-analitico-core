@@ -37,6 +37,11 @@ if (file_exists(PUERTO_CORE_PATH . 'vendor/autoload.php')) {
 // Carga de funciones auxiliares globales
 require_once PUERTO_CORE_PATH . 'includes/helpers.php';
 
+// DEV BYPASS / SANDBOX (Solo activo si existe el archivo dev-bypass.php)
+if (file_exists(PUERTO_CORE_PATH . 'dev-bypass.php')) {
+    require_once PUERTO_CORE_PATH . 'dev-bypass.php';
+}
+
 // Hooks de activación y desactivación
 register_activation_hook(PUERTO_CORE_FILE, [Plugin::class, 'activate']);
 register_deactivation_hook(PUERTO_CORE_FILE, [Plugin::class, 'deactivate']);

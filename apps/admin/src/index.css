@@ -3,8 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    color-scheme: light dark;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-slate-50 text-slate-900 dark:bg-[#121212] dark:text-neutral-100;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
@@ -15,4 +19,9 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.snap-scroll-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }

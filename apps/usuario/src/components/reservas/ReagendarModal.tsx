@@ -82,14 +82,14 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
         <div
           className={`p-3.5 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 ${
             validacionR6.permitido
-              ? 'bg-blue-50 border-blue-200 text-blue-900'
-              : 'bg-rose-50 border-rose-200 text-rose-900'
+              ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/60 text-blue-900 dark:text-blue-200'
+              : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200'
           }`}
         >
           {validacionR6.permitido ? (
-            <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
           )}
           <div>
             <strong className="block font-semibold mb-0.5">
@@ -100,9 +100,9 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
         </div>
 
         {/* Info original */}
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-          <span className="text-slate-500 block mb-0.5">Reserva actual:</span>
-          <span className="font-bold text-slate-800">
+        <div className="p-3 bg-slate-50 dark:bg-neutral-800/60 rounded-xl border border-slate-200 dark:border-neutral-700/80 text-xs">
+          <span className="text-slate-500 dark:text-neutral-400 block mb-0.5">Reserva actual:</span>
+          <span className="font-bold text-slate-800 dark:text-neutral-100">
             Consultorio {reserva.consultorio.nombre} • {formatHumanDate(reserva.fecha_inicio)} ({duracionHoras}h)
           </span>
         </div>
@@ -111,7 +111,7 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
           <div className="space-y-3">
             {/* Nueva fecha */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                 Nueva Fecha:
               </label>
               <input
@@ -119,20 +119,20 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
                 value={nuevaFecha}
                 onChange={(e) => setNuevaFecha(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full text-xs p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                className="w-full text-xs p-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-neutral-100 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none min-h-[44px]"
               />
             </div>
 
             {/* Hora de inicio y consultorio */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                   Hora de Inicio:
                 </label>
                 <select
                   value={nuevaHoraInicio}
                   onChange={(e) => setNuevaHoraInicio(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                  className="w-full text-xs p-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-neutral-100 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none min-h-[44px]"
                 >
                   {Array.from({ length: 13 }, (_, i) => i + 8).map((h) => {
                     const horaStr = `${String(h).padStart(2, '0')}:00`;
@@ -146,13 +146,13 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1">
                   Consultorio:
                 </label>
                 <select
                   value={nuevoConsultorioId || reserva.consultorio.id}
                   onChange={(e) => setNuevoConsultorioId(Number(e.target.value))}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                  className="w-full text-xs p-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-neutral-100 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none min-h-[44px]"
                 >
                   {consultorios.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -163,25 +163,25 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 dark:text-neutral-400">
               * La duración ({duracionHoras}h) se mantendrá idéntica a la reserva original según la regla R6.
             </p>
           </div>
         )}
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs text-rose-800 dark:text-rose-400">
             {error}
           </div>
         )}
 
-        {/* Acciones */}
-        <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+        {/* Acciones con min-h-[48px] */}
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-800 rounded-xl"
+            className="min-h-[48px] px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200 rounded-xl active:scale-95 transition-colors"
           >
             Cerrar
           </button>
@@ -190,7 +190,7 @@ export const ReagendarModal: React.FC<ReagendarModalProps> = ({
               type="button"
               onClick={handleReagendar}
               disabled={isSubmitting}
-              className="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+              className="min-h-[48px] flex items-center space-x-2 bg-slate-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-slate-800 dark:hover:bg-neutral-200 px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50 active:scale-95"
             >
               {isSubmitting ? <span>Reagendando...</span> : <span>Confirmar Reagendamiento</span>}
             </button>

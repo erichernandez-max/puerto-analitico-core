@@ -3,17 +3,27 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    color-scheme: light dark;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-slate-50 text-slate-900 dark:bg-[#121212] dark:text-neutral-100;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Ocultar scrollbars horizontales en barras de tabs manteniendo desplazamiento táctil */
+/* Ocultar scrollbars horizontales manteniendo desplazamiento táctil */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Smooth snap scrolling */
+.snap-scroll-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
 }

@@ -67,11 +67,11 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
     >
       <div className="space-y-4">
         {/* Información de la reserva */}
-        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm">
-          <div className="font-bold text-slate-800">
+        <div className="p-3.5 bg-slate-50 dark:bg-neutral-800/60 rounded-xl border border-slate-200 dark:border-neutral-700/80 text-xs sm:text-sm">
+          <div className="font-bold text-slate-800 dark:text-neutral-100">
             Consultorio {reserva.consultorio.nombre}
           </div>
-          <div className="text-slate-600 mt-1">
+          <div className="text-slate-600 dark:text-neutral-400 mt-1">
             {formatHumanDate(reserva.fecha_inicio)}
           </div>
         </div>
@@ -81,14 +81,14 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
           <div
             className={`p-3.5 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 ${
               validacionR5.puedeDevolver
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                : 'bg-rose-50 border-rose-200 text-rose-900'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200'
             }`}
           >
             {validacionR5.puedeDevolver ? (
-              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
             )}
             <div>
               <strong className="block font-semibold mb-0.5">
@@ -100,8 +100,8 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
         )}
 
         {esSerieCompleta && (
-          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <strong>Atención:</strong> Se cancelarán todas las reservas futuras de esta serie semanal recurrente. Aquellas con más de 24h devolverán saldo a tu cuenta.
             </div>
@@ -110,7 +110,7 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
 
         {/* Motivo opcional */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
             Motivo de cancelación (Opcional):
           </label>
           <textarea
@@ -118,23 +118,23 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
             onChange={(e) => setMotivo(e.target.value)}
             rows={2}
             placeholder="Ej: El paciente solicitó reagendar o suspender sesión..."
-            className="w-full text-xs p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-slate-900 focus:outline-none"
+            className="w-full text-xs p-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-slate-800 dark:text-neutral-100 focus:ring-1 focus:ring-slate-900 focus:outline-none"
           />
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs text-rose-800 dark:text-rose-400">
             {error}
           </div>
         )}
 
-        {/* Acciones */}
-        <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+        {/* Acciones con min-h-[48px] */}
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-neutral-800">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-800 rounded-xl"
+            className="min-h-[48px] px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-neutral-200 rounded-xl active:scale-95 transition-colors"
           >
             Volver
           </button>
@@ -142,7 +142,7 @@ export const CancelarModal: React.FC<CancelarModalProps> = ({
             type="button"
             onClick={handleConfirmar}
             disabled={isSubmitting}
-            className="flex items-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+            className="min-h-[48px] flex items-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50 active:scale-95"
           >
             {isSubmitting ? (
               <span>Cancelando...</span>

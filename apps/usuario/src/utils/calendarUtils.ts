@@ -71,3 +71,47 @@ export function downloadIcsFile(event: CalendarEventData, fileName?: string): vo
   document.body.removeChild(link);
   window.URL.revokeObjectURL(downloadUrl);
 }
+
+/**
+ * Genera y descarga un archivo .ics con múltiples eventos para sincronización masiva en Apple Calendar / macOS / iOS.
+ */
+export function downloadMultipleIcsFile(events: CalendarEventData[], fileName?: string): void {
+  const formatIcsDate = (dateStr: string): string => {
+    return dateStr.replace(/[-:]/g, '').replace(' ', 'T').slice(0, 15);
+  };
+
+  const icsLines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Puerto Analitico//Mi Agenda//ES',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  events.forEach((event, idx) => {
+    icsLines.push(
+      'BEGIN:VEVENT',
+      `UID:pa-${Date.now()}-${idx}@puertoanalitico.mx`,
+      `SUMMARY:${event.title.replace(/[\r\n]+/g, ' ')}`,
+      event.description ? `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}` : '',
+      event.location ? `LOCATION:${event.location}` : '',
+      `DTSTART;TZID=America/Mexico_City:${formatIcsDate(event.startDate)}`,
+      `DTEND;TZID=America/Mexico_City:${formatIcsDate(event.endDate)}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT'
+    );
+  });
+
+  icsLines.push('END:VCALENDAR');
+
+  const icsContent = icsLines.join('\r\n');
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = fileName || 'mi-agenda-puerto-analitico.ics';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(downloadUrl);
+}

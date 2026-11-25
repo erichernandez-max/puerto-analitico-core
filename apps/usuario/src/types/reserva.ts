@@ -19,6 +19,7 @@ export interface Reserva {
   google_event_id: string | null;
   es_recurrente: boolean;
   serie_id: number | string | null;
+  duracion_horas?: number;
   created_at: string;
   updated_at: string;
 }

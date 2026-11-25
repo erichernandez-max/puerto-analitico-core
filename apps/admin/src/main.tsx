@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { initThemeListener } from './utils/theme';
+
+// Inicializar escucha de modo oscuro automático según el SO móvil
+initThemeListener();
 
 function mountPuertoAdminApp() {
   const container = document.getElementById('puerto-admin-root') || document.getElementById('root');

@@ -19,18 +19,18 @@ export const App: React.FC = () => {
   if (!isAuthorized) return <AccessDenied />;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#121212] text-slate-800 dark:text-neutral-100 flex transition-colors">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
         <AdminHeader />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">
+        <main className="flex-1 w-full max-w-none p-3 sm:p-6 lg:p-8 pb-24 md:pb-8">
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'usuarios' && <UsuariosPage />}
           {activeTab === 'bloqueos' && <BloqueosPage />}
           {activeTab === 'reservas' && <ReservasPage />}
           {activeTab === 'configuracion' && <ConfiguracionPage />}
         </main>
-        <footer className="hidden md:block border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500">
+        <footer className="hidden md:block border-t border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-3 text-center text-xs text-slate-500 dark:text-neutral-400">
           © {new Date().getFullYear()} Puerto Analítico — Panel Administrativo • F4.4
         </footer>
       </div>

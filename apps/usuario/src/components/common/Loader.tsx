@@ -12,8 +12,8 @@ export const Loader: React.FC<LoaderProps> = ({
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
-      <Loader2 className="w-8 h-8 text-puerto-800 animate-spin" />
-      <p className="text-sm text-slate-500 font-medium">{mensaje}</p>
+      <Loader2 className="w-8 h-8 text-slate-800 dark:text-neutral-200 animate-spin" />
+      <p className="text-sm text-slate-500 dark:text-neutral-400 font-medium">{mensaje}</p>
     </div>
   );
 };

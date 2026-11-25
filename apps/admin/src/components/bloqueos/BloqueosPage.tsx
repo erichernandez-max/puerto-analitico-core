@@ -4,8 +4,6 @@ import {
   Plus, 
   AlertCircle, 
   CheckCircle2, 
-  Clock, 
-  MapPin, 
   Trash2, 
   RefreshCw,
   Repeat
@@ -64,41 +62,39 @@ export const BloqueosPage: React.FC = () => {
     loadBloqueos();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCrearBloqueo = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
     if (!fechaInicio || !fechaFin) {
-      setError('Debes seleccionar fecha y hora de inicio y fin.');
+      setError('Debes especificar fecha de inicio y fin.');
       return;
     }
 
-    if (new Date(fechaFin) <= new Date(fechaInicio)) {
-      setError('La fecha de fin debe ser posterior a la fecha de inicio.');
+    if (new Date(fechaInicio) >= new Date(fechaFin)) {
+      setError('La fecha y hora de inicio debe ser anterior a la de finalización.');
       return;
     }
 
-    if (!motivo.trim()) {
-      setError('El motivo del bloqueo es obligatorio.');
+    if (!motivo) {
+      setError('Por favor selecciona un motivo para el bloqueo.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const formatDateTime = (val: string) => val.replace('T', ' ') + (val.length === 16 ? ':00' : '');
-      
       await crearBloqueo({
-        consultorio_id: Number(consultorioId),
-        fecha_inicio: formatDateTime(fechaInicio),
-        fecha_fin: formatDateTime(fechaFin),
-        motivo: motivo.trim(),
+        consultorio_id: consultorioId,
+        fecha_inicio: fechaInicio.replace('T', ' ') + ':00',
+        fecha_fin: fechaFin.replace('T', ' ') + ':00',
+        motivo: motivo,
       });
 
-      setSuccess('¡Bloqueo administrativo registrado con éxito!');
-      setMotivo('');
+      setSuccess('Bloqueo creado con éxito.');
       setFechaInicio('');
       setFechaFin('');
+      setMotivo('');
       setConsultorioId(0);
       loadBloqueos();
     } catch (err: any) {
@@ -109,7 +105,7 @@ export const BloqueosPage: React.FC = () => {
   };
 
   const handleEliminarBloqueo = async (id: number) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este bloqueo? Esta acción habilitará nuevamente el consultorio.')) {
+    if (!window.confirm('¿Seguro que deseas eliminar este bloqueo de horario?')) {
       return;
     }
 
@@ -124,196 +120,149 @@ export const BloqueosPage: React.FC = () => {
     }
   };
 
-  const formatFecha = (str: string) => {
-    if (!str) return '-';
+  const formatFecha = (dStr: string) => {
     try {
-      const d = new Date(str.replace(' ', 'T'));
+      const d = new Date(dStr.replace(' ', 'T'));
       return d.toLocaleString('es-MX', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        dateStyle: 'medium',
+        timeStyle: 'short',
       });
     } catch {
-      return str;
+      return dStr;
     }
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <CalendarOff className="w-6 h-6 text-red-600" />
-          Bloqueos Administrativos / Masivos
+        <h1 className="text-xl font-bold text-slate-800 dark:text-neutral-100 flex items-center gap-2">
+          <CalendarOff className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          Bloqueos Administrativos y Mantenimiento
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Restringe la disponibilidad de consultorios por mantenimiento, días festivos o eventos especiales.
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
+          Restringe slots de reserva para mantenimiento, días feriados o eventos extraordinarios.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Formulario */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <Plus className="w-4 h-4 text-emerald-600" />
-            Crear Nuevo Bloqueo
-          </h2>
+      {/* Formulario para Nuevo Bloqueo */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 p-5 shadow-xs transition-colors">
+        <h2 className="text-base font-semibold text-slate-800 dark:text-neutral-100 mb-4 flex items-center gap-2">
+          <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          Nuevo Bloqueo de Espacio
+        </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-900 text-red-700 dark:text-rose-400 px-4 py-3 rounded-xl text-xs sm:text-sm">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-xl text-xs sm:text-sm">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleCrearBloqueo} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Consultorio */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Consultorio a bloquear
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
+                Consultorio:
               </label>
               <select
                 value={consultorioId}
                 onChange={(e) => setConsultorioId(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
-                <option value={0}>Todos los consultorios (Bloqueo general)</option>
+                <option value={0}>Todos los consultorios</option>
                 {consultorios.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-slate-400 mt-1">
-                Selecciona un consultorio específico o aplica el bloqueo a toda la sede.
-              </p>
             </div>
 
-            {/* Fechas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Fecha y hora de inicio
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Fecha y hora de fin
-                </label>
-                <input
-                  type="datetime-local"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Motivo */}
+            {/* Fecha y Hora Inicio */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Motivo del bloqueo
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
+                Inicio del Bloqueo:
               </label>
-              <textarea
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ejemplo: Mantenimiento de aire acondicionado, fumigación general, feriado..."
-                rows={3}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+              <input
+                type="datetime-local"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 required
               />
             </div>
 
-            {/* Avisos */}
-            {error && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors shadow-sm"
-              >
-                {isSubmitting ? 'Registrando bloqueo...' : 'Registrar Bloqueo'}
-              </button>
+            {/* Fecha y Hora Fin */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
+                Fin del Bloqueo:
+              </label>
+              <input
+                type="datetime-local"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                required
+              />
             </div>
-          </form>
-        </div>
 
-        {/* Panel lateral de ayuda / información */}
-        <div className="space-y-4">
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-600" />
-              ¿Cómo funcionan los bloqueos?
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Los bloqueos impiden que cualquier terapeuta reserve en los intervalos y consultorios especificados.
-              El calendario de la App de Usuario mostrará esos horarios como no disponibles automáticamente.
-            </p>
+            {/* Motivo */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1.5">
+                Motivo / Tipo:
+              </label>
+              <select
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                className="w-full px-3 py-2 text-xs min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                required
+              >
+                <option value="">Selecciona motivo...</option>
+                <option value="mantenimiento">Mantenimiento (Regla R17)</option>
+                <option value="feriado">Feriado Oficial</option>
+                <option value="admin">Administrativo / Reserva Externa</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-600" />
-              Consultorios Activos
-            </h3>
-            <ul className="text-xs text-slate-600 space-y-1.5">
-              <li className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D32]" />
-                Consultorio Verde
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E91E63]" />
-                Consultorio Rosa
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#1976D2]" />
-                Consultorio Azul
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#212121]" />
-                Consultorio Negro
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#6D4C41]" />
-                Consultorio Café
-              </li>
-            </ul>
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="min-h-[44px] px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors shadow-xs disabled:opacity-50 active:scale-95 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {isSubmitting ? 'Guardando...' : 'Aplicar Bloqueo'}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
 
       {/* Tabla de Bloqueos Activos y Futuros */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 shadow-xs overflow-hidden transition-colors">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-800">
+            <h2 className="text-base font-semibold text-slate-800 dark:text-neutral-100">
               Bloqueos Registrados ({bloqueos.length})
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
               Listado histórico y programado de bloqueos administrativos y de mantenimiento.
             </p>
           </div>
           <button
             onClick={loadBloqueos}
             disabled={isLoadingBloqueos}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-neutral-300 bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 rounded-xl transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoadingBloqueos ? 'animate-spin' : ''}`} />
             Actualizar
@@ -323,18 +272,18 @@ export const BloqueosPage: React.FC = () => {
         {isLoadingBloqueos ? (
           <div className="p-8 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />
+              <div key={i} className="h-12 bg-slate-100 dark:bg-neutral-800 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : bloqueos.length === 0 ? (
-          <div className="p-12 text-center text-sm text-slate-500">
+          <div className="p-12 text-center text-sm text-slate-500 dark:text-neutral-400">
             No hay bloqueos registrados actualmente.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <tr className="border-b border-slate-200 dark:border-neutral-800 bg-slate-50/70 dark:bg-neutral-800/40 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
                   <th className="text-left px-5 py-3">Consultorio</th>
                   <th className="text-left px-5 py-3">Fecha Inicio</th>
                   <th className="text-left px-5 py-3">Fecha Fin</th>
@@ -342,10 +291,10 @@ export const BloqueosPage: React.FC = () => {
                   <th className="text-center px-5 py-3">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                 {bloqueos.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-slate-800">
+                  <tr key={b.id} className="hover:bg-slate-50/70 dark:hover:bg-neutral-800/40 transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-neutral-100">
                       <div className="flex items-center gap-2">
                         <span 
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
@@ -354,26 +303,26 @@ export const BloqueosPage: React.FC = () => {
                         <span>{b.consultorio_nombre}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-xs whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-slate-600 dark:text-neutral-300 text-xs whitespace-nowrap">
                       {formatFecha(b.fecha_inicio)}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-xs whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-slate-600 dark:text-neutral-300 text-xs whitespace-nowrap">
                       {formatFecha(b.fecha_fin)}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-700">
+                    <td className="px-5 py-3.5 text-slate-700 dark:text-neutral-200">
                       <div className="flex items-center gap-1.5">
-                        <span className="capitalize text-xs font-semibold text-slate-800">
+                        <span className="capitalize text-xs font-semibold text-slate-800 dark:text-neutral-100">
                           {b.motivo}
                         </span>
                         {b.recurrente && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 font-medium">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-medium">
                             <Repeat className="w-2.5 h-2.5" />
                             Recurrente
                           </span>
                         )}
                       </div>
                       {b.patron_recurrencia && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">
+                        <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
                           {b.patron_recurrencia}
                         </p>
                       )}
@@ -383,7 +332,7 @@ export const BloqueosPage: React.FC = () => {
                         onClick={() => handleEliminarBloqueo(b.id)}
                         disabled={deletingId === b.id}
                         title="Eliminar bloqueo"
-                        className="p-1.5 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                        className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center p-2 rounded-xl text-red-600 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/40 disabled:opacity-50 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

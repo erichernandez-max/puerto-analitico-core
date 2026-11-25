@@ -46,9 +46,9 @@ export const ReglasInfo: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
-      <div className="flex items-center space-x-2 text-slate-900 font-bold text-base sm:text-lg">
-        <BookOpen className="w-5 h-5 text-emerald-600" />
+    <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-neutral-800 shadow-xs space-y-4 sm:space-y-5 transition-colors">
+      <div className="flex items-center space-x-2 text-slate-900 dark:text-neutral-100 font-bold text-base sm:text-lg">
+        <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         <h3>Reglamento y Políticas Operativas de Puerto Analítico</h3>
       </div>
 
@@ -56,18 +56,16 @@ export const ReglasInfo: React.FC = () => {
         {reglas.map((r) => (
           <div
             key={r.num}
-            className="p-4 bg-slate-50/80 rounded-xl border border-slate-200/80 flex items-start gap-3"
+            className="p-4 bg-slate-50/80 dark:bg-neutral-800/60 rounded-xl border border-slate-200/80 dark:border-neutral-700/80 flex items-start gap-3"
           >
-            <span className="w-8 h-8 rounded-lg bg-slate-900 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center justify-center flex-shrink-0">
               {r.num}
             </span>
             <div>
-              <h4 className="font-bold text-xs sm:text-sm text-slate-900">
+              <h4 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-neutral-100 mb-1">
                 {r.titulo}
               </h4>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                {r.desc}
-              </p>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">{r.desc}</p>
             </div>
           </div>
         ))}

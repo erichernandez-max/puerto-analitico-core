@@ -45,22 +45,22 @@ export const UsuariosPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Users className="w-6 h-6 text-emerald-600" />
+          <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-neutral-100 flex items-center gap-2">
+            <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             Gestión de Usuarios
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
             {usuarios.length} terapeutas registrados en Puerto Analítico
           </p>
         </div>
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setNuevoUsuarioModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+            className="min-h-[44px] flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-xs active:scale-95"
           >
             <UserPlus className="w-4 h-4" />
             Nuevo Usuario
@@ -68,7 +68,7 @@ export const UsuariosPage: React.FC = () => {
           <button
             onClick={cargarUsuarios}
             disabled={isLoading}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            className="min-h-[44px] flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-neutral-300 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-50 transition-colors active:scale-95"
           >
             <RefreshCw className={'w-4 h-4 ' + (isLoading ? 'animate-spin' : '')} />
             Actualizar
@@ -84,13 +84,13 @@ export const UsuariosPage: React.FC = () => {
           placeholder="Buscar por nombre o email..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+          className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm min-h-[44px] border border-slate-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-900 text-slate-800 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-900 text-red-700 dark:text-rose-400 px-4 py-3 rounded-xl text-sm">
           {error}
         </div>
       )}

@@ -11,6 +11,7 @@ use PuertoCore\Database\Seeders\ConsultoriosSeeder;
 use PuertoCore\Database\Seeders\ProductosSeeder;
 use PuertoCore\Database\Seeders\ReglasSeeder;
 use PuertoCore\Rest\AdminController;
+use PuertoCore\Rest\AuthController;
 use PuertoCore\Rest\ConsultoriosController;
 use PuertoCore\Rest\DisponibilidadController;
 use PuertoCore\Rest\MeController;
@@ -62,6 +63,7 @@ final class Plugin
     public function registerRestRoutes(): void
     {
         $controllers = [
+            new AuthController(),
             new ConsultoriosController(),
             new DisponibilidadController(),
             new ProductosController(),

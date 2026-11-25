@@ -32,28 +32,28 @@ export const SaldosOverview: React.FC = () => {
   const paquetes = saldos?.saldos ?? [];
 
   return (
-    <div className="space-y-6">
-      {/* Tarjeta Principal de "Mi Saldo" Rediseñada */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800/80 relative overflow-hidden">
+    <div className="space-y-5">
+      {/* Tarjeta Principal de "Mi Saldo" */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950 text-white rounded-3xl p-5 sm:p-8 shadow-2xl border border-slate-800/80 dark:border-neutral-800 relative overflow-hidden transition-colors">
         {/* Glow de fondo */}
         <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 translate-y-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
           {/* Header de la tarjeta */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-2.5 text-slate-400 text-xs sm:text-sm font-semibold tracking-wider uppercase">
-              <span className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 text-emerald-400">
+            <div className="flex items-center space-x-2.5 text-slate-400 dark:text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase">
+              <span className="p-2 rounded-xl bg-slate-800/80 dark:bg-neutral-800 border border-slate-700/60 dark:border-neutral-700 text-emerald-400">
                 <Wallet className="w-5 h-5" />
               </span>
               <span>Balance de Saldo de Horas</span>
             </div>
 
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={() => cargarSaldos()}
                 disabled={isLoading}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-colors min-h-[44px]"
+                className="inline-flex items-center justify-center space-x-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 border border-slate-700/60 dark:border-neutral-700 transition-colors min-h-[48px] active:scale-95"
                 title="Actualizar saldo"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -62,7 +62,7 @@ export const SaldosOverview: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('productos')}
-                className="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md hover:shadow-lg min-h-[44px]"
+                className="inline-flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md hover:shadow-lg min-h-[48px] active:scale-95"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Comprar Horas</span>
@@ -72,7 +72,7 @@ export const SaldosOverview: React.FC = () => {
 
           {/* Gran número de Horas Disponibles */}
           <div>
-            <span className="text-xs font-medium text-slate-400 block mb-1">
+            <span className="text-xs font-medium text-slate-400 dark:text-neutral-400 block mb-1">
               Horas Disponibles para Reservar
             </span>
             <div className="flex items-baseline space-x-3">
@@ -84,20 +84,20 @@ export const SaldosOverview: React.FC = () => {
               </span>
             </div>
 
-            {/* Desglose exacto requerido */}
-            <p className="text-xs sm:text-sm text-slate-300 mt-2 font-normal leading-relaxed">
+            {/* Desglose */}
+            <p className="text-xs sm:text-sm text-slate-300 dark:text-neutral-300 mt-2 font-normal leading-relaxed">
               Tienes <strong className="text-white font-semibold">{horasCompradas.toFixed(2)}</strong> horas compradas.{' '}
               <strong className="text-amber-300 font-semibold">{horasApartadas.toFixed(2)}</strong> están apartadas en reservas y{' '}
-              <strong className="text-slate-400 font-semibold">{horasConsumidas.toFixed(2)}</strong> consumidas.
+              <strong className="text-slate-400 dark:text-neutral-400 font-semibold">{horasConsumidas.toFixed(2)}</strong> consumidas.
             </p>
           </div>
 
-          {/* Indicador Visual / Barra de Progreso Segmentada (Libre vs Apartado vs Consumido) */}
-          <div className="bg-slate-950/60 p-4 sm:p-5 rounded-2xl border border-slate-800/90 space-y-3">
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-400">
+          {/* Indicador Visual */}
+          <div className="bg-slate-950/60 dark:bg-neutral-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800/90 dark:border-neutral-800 space-y-3">
+            <div className="flex justify-between items-center text-xs font-semibold text-slate-400 dark:text-neutral-400">
               <span>Distribución del Saldo</span>
               {saldos?.fecha_vencimiento && (
-                <span className="text-slate-400 flex items-center gap-1 font-mono text-[11px]">
+                <span className="text-slate-400 dark:text-neutral-400 flex items-center gap-1 font-mono text-[11px]">
                   <Calendar className="w-3.5 h-3.5 text-slate-500" />
                   Vence: {saldos.fecha_vencimiento}
                 </span>
@@ -105,7 +105,7 @@ export const SaldosOverview: React.FC = () => {
             </div>
 
             {/* Barra segmentada */}
-            <div className="w-full h-3.5 bg-slate-800 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+            <div className="w-full h-3.5 bg-slate-800 dark:bg-neutral-800 rounded-full overflow-hidden flex p-0.5 gap-0.5">
               {pctLibre > 0 && (
                 <div
                   className="bg-emerald-500 h-full rounded-full transition-all duration-500 shadow-sm"
@@ -122,13 +122,13 @@ export const SaldosOverview: React.FC = () => {
               )}
               {pctConsumido > 0 && (
                 <div
-                  className="bg-slate-600 h-full rounded-full transition-all duration-500 shadow-sm"
+                  className="bg-slate-600 dark:bg-neutral-600 h-full rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${pctConsumido}%` }}
                   title={`Consumido: ${horasConsumidas}h (${pctConsumido.toFixed(1)}%)`}
                 />
               )}
               {total === 0 && (
-                <div className="w-full bg-slate-800 h-full rounded-full" />
+                <div className="w-full bg-slate-800 dark:bg-neutral-800 h-full rounded-full" />
               )}
             </div>
 
@@ -151,7 +151,7 @@ export const SaldosOverview: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-md bg-slate-600 flex-shrink-0" />
+                <span className="w-3 h-3 rounded-md bg-slate-600 dark:bg-neutral-600 flex-shrink-0" />
                 <div>
                   <span className="font-semibold block text-white">Consumido</span>
                   <span className="text-[11px] text-slate-400">{horasConsumidas.toFixed(1)}h ({pctConsumido.toFixed(0)}%)</span>
@@ -161,7 +161,7 @@ export const SaldosOverview: React.FC = () => {
           </div>
 
           {/* Banner de Regla R9 */}
-          <div className="pt-2 text-xs sm:text-sm text-slate-300 flex items-start gap-2.5">
+          <div className="pt-2 text-xs sm:text-sm text-slate-300 dark:text-neutral-300 flex items-start gap-2.5">
             <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>
               <strong className="text-white">Regla R9 (Vigencia y Renovación en Cadena):</strong>{' '}
@@ -171,34 +171,34 @@ export const SaldosOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* Desglose de paquetes si está disponible */}
+      {/* Desglose de paquetes */}
       {paquetes.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-slate-900 px-1">
+          <h3 className="text-base font-bold text-slate-900 dark:text-neutral-100 px-1">
             Paquetes Activos Asociados
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {paquetes.map((p) => (
               <div
                 key={p.id}
-                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between"
+                className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-neutral-800 shadow-xs flex flex-col justify-between transition-colors"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h4 className="font-bold text-sm sm:text-base text-slate-900">
+                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-neutral-100">
                       {p.producto_nombre || `Paquete #${p.id}`}
                     </h4>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-full">
                       {p.horas_disponibles}h libres
                     </span>
                   </div>
-                  <div className="text-xs text-slate-500 mb-2">
+                  <div className="text-xs text-slate-500 dark:text-neutral-400 mb-2">
                     {p.horas_compradas}h compradas • {p.horas_consumidas}h consumidas
                   </div>
                 </div>
-                <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-100 dark:border-neutral-800 text-xs text-slate-500 dark:text-neutral-400 flex items-center justify-between">
                   <span>Vence:</span>
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-semibold text-slate-800 dark:text-neutral-200">
                     {p.fecha_vencimiento.split(' ')[0]} ({p.dias_para_vencer}d)
                   </span>
                 </div>

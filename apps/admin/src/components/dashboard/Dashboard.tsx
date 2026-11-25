@@ -11,17 +11,20 @@ export const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Resumen general de Puerto Analítico</p>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-neutral-100">Dashboard</h1>
+          <p className="text-sm text-slate-500 dark:text-neutral-400 mt-0.5">Resumen general de Puerto Analítico</p>
         </div>
-        <button onClick={() => cargarMetricas()} disabled={isLoading}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">
+        <button
+          onClick={() => cargarMetricas()}
+          disabled={isLoading}
+          className="min-h-[44px] flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-neutral-300 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800 disabled:opacity-50 transition-colors shadow-xs active:scale-95"
+        >
           <RefreshCw className={'w-4 h-4 ' + (isLoading ? 'animate-spin' : '')} />
           Actualizar
         </button>
       </div>
       {metricas && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-400 dark:text-neutral-500">
           Período: {metricas.periodo.desde.split(' ')[0]} → {metricas.periodo.hasta.split(' ')[0]}
           {' · '}Usuarios activos: {metricas.usuarios.activos} / {metricas.usuarios.total}
         </p>

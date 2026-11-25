@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AppTab = 'reservar' | 'mis-reservas' | 'mi-saldo' | 'productos' | 'soporte';
+export type AppTab = 'reservar' | 'mi-agenda' | 'mis-reservas' | 'mi-saldo' | 'productos' | 'soporte';
 
 export interface ToastMessage {
   id: number;
